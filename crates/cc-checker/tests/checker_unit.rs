@@ -355,11 +355,7 @@ fn language_check_korean_with_english_technical_terms() {
     // Conventional commit prefix (ci:) + Korean content + English package names in parens.
     // dominant_language() would wrongly classify this as English; presence-based check passes.
     assert!(
-        check(
-            &cfg,
-            "ci: 릴리즈 워크플로 추가 (gitversion-rs + git-cliff)"
-        )
-        .is_empty(),
+        check(&cfg, "ci: 릴리즈 워크플로 추가 (gitversion-rs + git-cliff)").is_empty(),
         "Korean subject with English technical terms must pass Korean check"
     );
 
