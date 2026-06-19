@@ -1,0 +1,314 @@
+# yaml-language-server: $schema=./.git-warden.schema.json
+# git-warden configuration
+# All fields are optional. The defaults shown below apply when omitted.
+
+comment_language:
+  # enabled: false to skip diff comment checks entirely.
+  # Default: true
+  enabled: true
+
+  # required_language: the natural language comments must be written in.
+  # Values: korean | english | japanese | chinese | any
+  # "any" skips language detection (only parser correctness is checked).
+  # Default: korean
+  required_language: korean
+
+  # min_length: minimum letter count for a comment to be language-checked.
+  # Short/technical comments (e.g. "// TODO", "// nolint") are always skipped.
+  # Default: 5
+  min_length: 5
+
+  # check_mode: controls which comments are inspected.
+  #   diff — only comments that touch added lines (default, fast)
+  #   full — all comments in the staged version of the file
+  # Default: diff
+  check_mode: diff
+
+  # languages: friendly language names to parse. Takes priority over extensions.
+  # Supported: go, typescript, javascript, java, kotlin, python, c, cpp, csharp, swift, rust
+  # When omitted, extensions below are used.
+  # languages:
+  #   - go
+  #   - typescript
+  #   - python
+
+  # locale: BCP-47 locale code that sets required_language automatically.
+  # Supported: ko (korean), en (english), ja (japanese), zh / zh-hans / zh-hant (chinese).
+  # When set, overrides required_language.
+  # locale: ko
+
+  # extensions: file extensions to inspect for comment language.
+  # Used when languages is not set.
+  extensions:
+    - .go
+    - .ts
+    - .tsx
+    - .js
+    - .jsx
+    - .mjs
+    - .java
+    - .kt
+    - .py
+    - .c
+    - .cpp
+    - .cs
+    - .swift
+    - .rs
+
+  # skip_directives: additional comment prefixes to skip (merged with built-ins).
+  # Built-in skips: todo, fixme, nolint, noqa, nosec, go:generate, http://, etc.
+  # skip_directives:
+  #   - "internal:"
+  #   - "ref:"
+
+  # no_emoji: disallow emoji in comments (default: false).
+  # When true, comments containing emoji are reported as errors.
+  # no_emoji: false
+
+  # check_strings: also check string literals for language compliance.
+  # When true, required_language is applied to string literals as well.
+  # Default: false
+  # check_strings: false
+
+  # skip_technical_strings: when check_strings=true, skip technical identifier strings (default: true).
+  # Skipped when:
+  #   - contains a slash (/) → path or MIME type (e.g. /api/v1, application/json)
+  #   - pure ASCII with no lowercase → constant (e.g. ERR_TOKEN, MAX_SIZE)
+  # Set to false to check all strings.
+  # skip_technical_strings: true
+
+  # allowed_words: list of words to skip in language checks.
+  # These words are removed from the comment before language detection.
+  # Add proper nouns, technical terms, or words that must remain in their original language.
+  # allowed_words:
+  #   - TypeScript
+  #   - JavaScript
+  #   - API
+  #   - URL
+
+  # allowed_words_file: path to a text file with one allowed word per line.
+  # Lines starting with '#' are treated as comments and ignored. Merged with allowed_words.
+  # allowed_words_file: .git-warden-words.txt
+
+  # allowed_words_url: URL to fetch allowed words file via HTTP/HTTPS.
+  # Same format as allowed_words_file. Merged with allowed_words and allowed_words_file.
+  # allowed_words_url: https://example.com/allowed-words.txt
+
+  # ignore_files: glob patterns to exclude from comment language checks.
+  # Same role as exceptions.comment_language_ignore; merged together.
+  ignore_files:
+    - "**/*_test.go" # allow English comments in test files
+    - "internal/charset/ambiguous_gen.go" # auto-generated file
+    - "internal/comment/testdata/**" # parser test fixtures — mixed languages allowed
+    - "internal/checker/testdata/**" # parser test fixtures — mixed languages allowed
+
+  # file_languages: per-file language rules (first matching pattern wins).
+  # Overrides required_language for matching files.
+  # language accepts the same values as required_language, plus locale codes (ko, en, ja, zh).
+  # Use "any" to allow any language (e.g. for i18n / locale files).
+  # file_languages:
+  #   - pattern: "locales/**"
+  #     language: any
+  #   - pattern: "i18n/**"
+  #     language: english
+  #   - pattern: "locale/ja/**"
+  #     language: ja
+  #   - pattern: "locale/zh/**"
+  #     language: zh
+
+binary_file:
+  # enabled: block commits of binary files (compiled executables, etc.).
+  # Detects files flagged as binary by git diff --staged --numstat.
+  # Default: true
+  enabled: true
+
+  # ignore_files: glob patterns to exclude from binary file checks.
+  # Use to allow intentionally committed binary files such as images, fonts, or icons.
+  # ignore_files:
+  #   - "**/*.png"
+  #   - "**/*.jpg"
+  #   - "**/*.jpeg"
+  #   - "**/*.gif"
+  #   - "**/*.ico"
+  #   - "**/*.woff"
+  #   - "**/*.woff2"
+  #   - "**/*.ttf"
+  #   - "**/*.eot"
+  #   - "**/*.pdf"
+
+lint:
+  # enabled: enable data file syntax checking (default: true).
+  # Detects syntax errors in YAML, JSON, and XML files.
+  enabled: true
+
+  yaml:
+    # enabled: enable YAML syntax checking (default: true)
+    enabled: true
+    # ignore_files: glob patterns to exclude from YAML lint
+    # ignore_files:
+    #   - "vendor/**"
+
+  json:
+    # enabled: enable JSON syntax checking (default: true)
+    enabled: true
+    # allow_json5: allow JSON5 format (// comments, trailing commas, etc.) (default: false)
+    # allow_json5: false
+    # ignore_files: glob patterns to exclude from JSON lint.
+    # Excluded by default: package-lock.json, yarn.lock, pnpm-lock.yaml, and other auto-generated files.
+    # User-defined patterns override the defaults.
+    # ignore_files:
+    #   - "package-lock.json"
+    #   - "*.generated.json"
+
+  xml:
+    # enabled: enable XML syntax checking (default: true)
+    enabled: true
+    # ignore_files: glob patterns to exclude from XML lint
+    # ignore_files:
+    #   - "vendor/**"
+
+encoding:
+  # enabled: enable file encoding checks (default: true)
+  enabled: true
+  # require_utf8: require UTF-8 encoding (default: true).
+  # When true, commits of non-UTF-8 text files are blocked.
+  require_utf8: true
+  # ignore_files: glob patterns to exclude from encoding checks
+  # ignore_files:
+  #   - "**/*.bin"
+  #   - "legacy/**"
+
+editorconfig:
+  # enabled: enable .editorconfig rule checking (default: true).
+  # Automatically skipped when no .editorconfig file is present.
+  enabled: true
+  # ignore_files: glob patterns to exclude from editorconfig checks.
+  # ignore_files:
+  #   - "vendor/**"
+  #   - "**/*.generated.go"
+
+commit_message:
+  # enabled: enable all commit message checks (default: true).
+  # When false, all sub-checks (no_ai_coauthor, no_unicode_spaces, etc.) are skipped.
+  # enabled: true
+
+  # no_ai_coauthor: block AI tool Co-authored-by trailers (default: true).
+  # When true, Co-authored-by lines matching built-in AI email patterns
+  # (Copilot, Claude, Cursor, Codeium, etc.) are rejected and auto-removed by the fix command.
+  # Regular human collaborators are not affected.
+  # Default: true
+  no_ai_coauthor: true
+
+  # coauthor_remove_emails: additional email glob patterns to remove beyond built-in AI patterns.
+  # Supports '*' wildcard (e.g. "*@myai.internal"), case-insensitive.
+  # Built-in AI patterns: *copilot*@*, noreply@anthropic.com, *@cursor.sh, *@codeium.com, etc.
+  # coauthor_remove_emails:
+  #   - "*@myai.internal"
+  #   - "aibot@company.com"
+
+  # no_unicode_spaces: disallow invisible / non-standard Unicode characters.
+  # Detected using the same InvisibleRanges table as Gitea.
+  # Covers: NBSP (U+00A0), EM SPACE (U+2003), ZWSP (U+200B), BiDi controls, etc.
+  # BOM (U+FEFF) is explicitly allowed as a valid encoding marker.
+  # Default: true
+  no_unicode_spaces: true
+
+  # no_ambiguous_chars: disallow Unicode characters that visually resemble ASCII
+  # but are different codepoints — e.g. Cyrillic А (U+0410) vs Latin A (U+0041).
+  # Detection uses the same AmbiguousCharacters tables as Gitea (VSCode unicode data).
+  # Default: true
+  no_ambiguous_chars: true
+
+  # no_bad_runes: disallow invalid UTF-8 byte sequences in commit messages.
+  # Default: true
+  no_bad_runes: true
+
+  # no_emoji: disallow emoji in commit messages (default: false).
+  # When true, commit messages containing emoji characters are reported as errors.
+  # no_emoji: false
+
+  # locale: BCP 47 locale for locale-specific ambiguous character detection.
+  # Supported: ko, ja, zh-hans, zh-hant, ru, _default
+  # Default: ko
+  locale: ko
+
+  # conventional_commit: enforce Conventional Commits format (https://www.conventionalcommits.org/).
+  # Format: <type>[(<scope>)][!]: <description>
+  conventional_commit:
+    # enabled: true to enforce conventional commit format.
+    # Default: false
+    enabled: true
+
+    # types: allowed commit types.
+    # Default: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+    # types:
+    #   - feat
+    #   - fix
+    #   - docs
+    #   - chore
+
+    # require_scope: require a scope in parentheses, e.g. feat(auth): ...
+    # Default: false
+    # require_scope: false
+
+    # allow_merge_commits: skip format check for "Merge ..." commits.
+    # Default: true
+    # allow_merge_commits: true
+
+    # allow_revert_commits: skip format check for "Revert ..." commits.
+    # Default: true
+    # allow_revert_commits: true
+
+  # language_check: check that the commit message is written in the required language.
+  language_check:
+    # enabled: true to enable language checking of commit messages.
+    # Default: false
+    enabled: false
+
+    # required_language: the natural language the commit message must be in.
+    # Values: korean | english | japanese | chinese | any
+    # Default: korean
+    required_language: korean
+
+    # min_length: minimum letter count before a line is language-checked.
+    # Default: 5
+    min_length: 5
+
+    # skip_prefixes: subject line prefixes that bypass language checking.
+    # Default: Merge, Revert, fixup!, squash!
+    skip_prefixes:
+      - "Merge"
+      - "Revert"
+      - "fixup!"
+      - "squash!"
+
+# In-code directives (all languages — Go, TypeScript, Python, Java, etc.)
+# Add these in comments inside source files to control language checking locally:
+#
+#   git-warden:ignore              skip the immediately following comment
+#   git-warden:disable             disable language check from this line
+#   git-warden:disable:lang=<L>    disable default; use language L in this region
+#   git-warden:enable              re-enable after a disable
+#   git-warden:lang=<L>            switch required language from this point
+#   git-warden:file-lang=<L>       set required language for the whole file
+#
+# <L> accepts: korean, english, japanese, chinese, any  (or locale codes ko, en, ja, zh)
+#
+# Examples:
+#   // git-warden:ignore
+#   // This English comment is intentional
+#
+#   // git-warden:file-lang=english   ← at top of file for i18n files
+#
+#   // git-warden:disable:lang=english
+#   // This block uses English on purpose
+#   // git-warden:enable
+
+# exceptions: global and per-feature file exclusion patterns.
+# exceptions:
+#   global_ignore:
+#     - "vendor/**"
+#     - "third_party/**"
+#   comment_language_ignore:
+#     - "legacy/**"
+#     - "*.generated.go"

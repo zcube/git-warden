@@ -1,0 +1,187 @@
+# yaml-language-server: $schema=./.git-warden.schema.json
+# git-warden configuration
+# All fields are optional. Defaults apply when omitted.
+
+comment_language:
+  enabled: true
+  locale: %s                  # BCP-47 (ko/en/ja/zh) or legacy (korean/english/japanese/chinese/any)
+  min_length: 5
+  check_mode: diff            # diff | full
+  extensions:
+    - .go
+    - .ts
+    - .tsx
+    - .js
+    - .jsx
+    - .mjs
+    - .java
+    - .kt
+    - .py
+    - .c
+    - .cpp
+    - .cs
+    - .swift
+    - .rs
+    - .hcl
+    - .tf
+    - .tfvars
+    - dockerfile
+    # - .md           # enable to check comment language in Markdown files
+
+  # allowed_words: list of English words to ignore in language detection.
+  # Use for proper nouns, technical terms, or words that must stay in their original form.
+  # allowed_words:
+  #   - TypeScript
+  #   - JavaScript
+  #   - API
+  #   - URL
+
+  # allowed_words_file: path to a plain-text file with one allowed word per line.
+  # allowed_words_file: .git-warden-words.txt
+
+  # allowed_words_url: URL to fetch the allowed words file via HTTP/HTTPS.
+  # allowed_words_url: https://example.com/allowed-words.txt
+
+  # allowed_words_cache: local caching for allowed words fetched from a URL.
+  # allowed_words_cache:
+  #   enabled: true
+  #   ttl: 24h    # cache TTL (e.g. 1h, 30m, 7d)
+
+  # check_strings: also check string literals for language (default: false).
+  # check_strings: false
+
+  # no_emoji: disallow emoji in comments (default: false).
+  # no_emoji: false
+
+  # ignore_files: glob patterns to exclude from comment language checks.
+  # ignore_files:
+  #   - "**/*_test.go"
+  #   - "**/*.generated.go"
+  #   - "vendor/**"
+
+  # file_languages: per-file locale overrides (first matching pattern wins).
+  # file_languages:
+  #   - pattern: "locales/**"
+  #     locale: any
+  #   - pattern: "i18n/**"
+  #     locale: en
+
+binary_file:
+  enabled: true
+  # default_policy: block         # block | allow | lfs (default: block)
+  # Built-in image extensions (.png .jpg .jpeg .gif .webp .bmp .ico .tiff .tif .heic .heif .avif)
+  # default to allow when no explicit rule matches.
+
+  # rules: per-extension policies (first matching rule wins).
+  # rules:
+  #   # Force images to LFS:
+  #   - extensions: [.png, .jpg, .jpeg, .gif, .webp]
+  #     policy: lfs
+  #   # Large design files / videos:
+  #   - extensions: [.psd, .ai, .sketch]
+  #     policy: lfs
+  #   - extensions: [.mp4, .mov, .webm]
+  #     policy: lfs
+  #   # Allow fonts as-is:
+  #   - extensions: [.woff2, .ttf, .otf]
+  #     policy: allow
+
+  # ignore_files: glob patterns to skip the binary policy check entirely.
+  # ignore_files:
+  #   - "assets/icons/**"
+
+lint:
+  enabled: true
+  yaml:
+    enabled: true
+  json:
+    enabled: true
+    # allow_json5: false     # allow JSON5 syntax (comments, trailing commas)
+  xml:
+    enabled: true
+  toml:
+    enabled: true
+
+encoding:
+  enabled: true
+  require_utf8: true
+  # no_invisible_chars: true   # check for invisible Unicode characters (NBSP, ZWSP, etc.)
+  # no_ambiguous_chars: true   # check for Unicode characters that look like ASCII
+
+editorconfig:
+  enabled: true
+  # ignore_files:
+  #   - "vendor/**"
+
+# append_only: paths that must never be modified once committed (e.g. DB migrations).
+# Disabled by default — set enabled: true and specify paths to activate.
+# append_only:
+#   enabled: true
+#   paths:
+#     - "migrations/**"
+#     - "db/migrations/**"
+#   # filename_order: numeric (default). Set to none to disable ordering checks.
+#   # filename_order: none
+
+# protected_paths: fully freeze paths matching the given globs — all staged changes
+# (additions, modifications, deletions) are blocked, including appends.
+# Unlike append_only, even adding content at EOF is rejected. exceptions.global_ignore applies.
+# protected_paths:
+#   enabled: true
+#   paths:
+#     - "legacy/**"
+
+# cache_dir: blocks commits that include files inside build artifact / cache directories
+# (node_modules, dist, build, target, __pycache__, .venv, etc.).
+# Detection is based on parent-directory indicator files (go.mod, package.json, Cargo.toml, etc.).
+cache_dir:
+  enabled: true
+  # ignore_dirs: directories you intentionally commit (e.g. Go vendor).
+  # ignore_dirs:
+  #   - vendor
+
+commit_message:
+  # enabled: true              # set false to disable all commit message checks
+  no_ai_coauthor: true
+  no_unicode_spaces: true
+  no_ambiguous_chars: true
+  no_bad_runes: true
+  # no_emoji: false
+  locale: %s
+
+  conventional_commit:
+    enabled: false
+    locale: %s    # localized type aliases (e.g., feat -> %s)
+
+  language_check:
+    enabled: false
+    locale: %s    # if empty, derived automatically from commit_message.locale
+    min_length: 5
+    skip_prefixes:
+      - "Merge"
+      - "Revert"
+      - "fixup!"
+      - "squash!"
+
+# exceptions: global and per-feature file exclusions.
+# exceptions:
+#   global_ignore:
+#     - "vendor/**"
+#     - "third_party/**"
+#   comment_language_ignore:
+#     - "legacy/**"
+
+# custom_rules: regex-based custom check rules.
+# custom_rules:
+#   commit_message:
+#     - name: no-wip
+#       pattern: "(?i)^WIP"
+#       message: "Remove the WIP prefix before committing"
+#     - name: need-ticket
+#       pattern: "\\[PROJ-\\d+\\]"
+#       message: "Include a ticket ID in the subject line (e.g. [PROJ-123])"
+#       required: true
+#   diff:
+#     - name: no-api-key
+#       pattern: "(?i)(api_key|secret_key)\\s*=\\s*['\"][^'\"]{10,}"
+#       message: "Possible API key detected — do not commit secrets"

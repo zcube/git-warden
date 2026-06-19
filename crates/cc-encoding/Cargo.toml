@@ -1,0 +1,12 @@
+[package]
+name = "cc-encoding"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+chardetng.workspace = true
+encoding_rs.workspace = true
+infer.workspace = true

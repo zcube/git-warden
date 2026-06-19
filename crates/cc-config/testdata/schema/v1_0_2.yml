@@ -1,0 +1,45 @@
+# v1.0.2~v1.0.4 설정 파일 예시
+comment_language:
+  enabled: true
+  required_language: korean
+  min_length: 5
+  check_mode: diff
+  no_emoji: false
+  extensions:
+    - .go
+    - .ts
+    - .py
+
+binary_file:
+  enabled: true
+
+lint:
+  enabled: true
+  yaml:
+    enabled: true
+  json:
+    enabled: true
+  xml:
+    enabled: true
+
+encoding:
+  enabled: true
+  require_utf8: true
+
+editorconfig:
+  enabled: true
+
+commit_message:
+  enabled: true
+  no_ai_coauthor: true
+  no_unicode_spaces: true
+  no_ambiguous_chars: true
+  no_bad_runes: true
+  no_emoji: false
+  locale: ko
+  conventional_commit:
+    enabled: false
+    locale: ko
+  language_check:
+    enabled: false
+    required_language: korean

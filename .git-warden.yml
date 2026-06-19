@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=./.git-warden.schema.json
+# git-warden configuration for commit-checker-rs
+
+comment_language:
+  enabled: true
+  locale: en
+  min_length: 5
+  check_mode: diff
+  extensions:
+    - .go
+    - .rs
+    - .ts
+    - .tsx
+    - .js
+    - .jsx
+    - .py
+    - .java
+    - .kt
+    - .c
+    - .cpp
+    - .cs
+  ignore_files:
+    - "crates/**/testdata/**"
+    - "locales/**"
+
+commit_message:
+  no_ai_coauthor: true
+  no_unicode_spaces: true
+  no_ambiguous_chars: true
+  no_bad_runes: true
+  locale: en
+  language_check:
+    enabled: true
+    locale: en
+    min_length: 5
+    skip_prefixes:
+      - "Merge"
+      - "Revert"
+      - "fixup!"
+      - "squash!"

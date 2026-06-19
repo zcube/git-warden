@@ -1,0 +1,2 @@
+# empty git config — used by tests to override GIT_CONFIG_GLOBAL
+# and prevent global hooks (hook.*) from running in temporary repos.

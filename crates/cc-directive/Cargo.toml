@@ -1,0 +1,11 @@
+[package]
+name = "cc-directive"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+cc-comment.workspace = true
+cc-langdetect.workspace = true

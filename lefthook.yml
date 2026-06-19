@@ -1,0 +1,14 @@
+pre-commit:
+  commands:
+    git-warden-diff:
+      run: cargo run -q -p git-warden -- diff
+
+commit-msg:
+  commands:
+    git-warden-msg:
+      run: cargo run -q -p git-warden -- msg {1}
+
+prepare-commit-msg:
+  commands:
+    git-warden-prepare:
+      run: cargo run -q -p git-warden -- prepare-msg {1}

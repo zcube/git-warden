@@ -1,0 +1,29 @@
+[package]
+name = "cc-checker"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+cc-config.workspace = true
+cc-comment.workspace = true
+cc-charset.workspace = true
+cc-encoding.workspace = true
+cc-langdetect.workspace = true
+cc-gitdiff.workspace = true
+cc-emoji.workspace = true
+cc-lint.workspace = true
+cc-editorconfig.workspace = true
+cc-pathutil.workspace = true
+cc-directive.workspace = true
+cc-cachedir.workspace = true
+cc-i18n.workspace = true
+cc-logger.workspace = true
+regex.workspace = true
+once_cell.workspace = true
+rayon.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,23 @@
+# v1.0.0 설정 파일 예시
+comment_language:
+  enabled: true
+  required_language: korean
+  min_length: 5
+  check_mode: diff
+  extensions:
+    - .go
+    - .ts
+    - .py
+
+commit_message:
+  no_coauthor: true
+  no_unicode_spaces: true
+  no_ambiguous_chars: true
+  no_bad_runes: true
+  locale: ko
+  conventional_commit:
+    enabled: false
+
+exceptions:
+  global_ignore:
+    - "vendor/**"

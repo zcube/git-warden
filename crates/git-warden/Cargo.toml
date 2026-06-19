@@ -1,0 +1,29 @@
+[package]
+name = "git-warden"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "git-warden"
+path = "src/main.rs"
+
+[dependencies]
+cc-checker.workspace = true
+cc-config.workspace = true
+cc-gitdiff.workspace = true
+cc-progress.workspace = true
+cc-cachedir.workspace = true
+cc-i18n.workspace = true
+cc-version.workspace = true
+cc-logger.workspace = true
+cc-langdetect.workspace = true
+cc-encoding.workspace = true
+clap.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+assert_cmd = "2"
+predicates = "3"
