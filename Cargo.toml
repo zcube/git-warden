@@ -12,7 +12,7 @@ authors = ["zcube <zcubekr@gmail.com>"]
 
 [workspace.dependencies]
 # internal crates
-git-warden-core = { path = "crates/git-warden-core" }
+git-warden-core = { path = "crates/git-warden-core", version = "0.0.1" }
 
 # external crates
 anyhow = "1"
