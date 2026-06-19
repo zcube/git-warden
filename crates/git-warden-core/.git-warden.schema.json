@@ -1,0 +1,749 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/zcube/git-warden/blob/main/.git-warden.schema.json",
+  "title": "git-warden configuration",
+  "description": "Configuration schema for git-warden (.git-warden.yml) — schema v1.2.0 (locale unified: required_language → locale)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "enabled": {
+      "description": "Whether to enable git-warden globally (default: true).\nUsed to disable all checks with a single enabled: false line for a specific repository when running as a global hook (git config --global) across all repos.\nWhen a project config exists, the global config is ignored; on preset merge, the body value takes precedence over the preset.",
+      "type": "boolean",
+      "default": true
+    },
+
+    "preset": {
+      "description": "Base configuration preset to load from a remote URL. Fetches a .git-warden.yml-format YAML from the URL and uses it as the base; local config overrides the preset.\nWhen a project config exists, the global config is completely ignored and the order is: project config > project preset. The global config is only used when no project config exists, in which case the order is: global config > global preset.\nA preset cannot specify preset.url again (nested presets not supported).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "description": "HTTP/HTTPS URL to fetch the preset config file from.",
+          "type": "string",
+          "format": "uri",
+          "examples": ["https://example.com/presets/.git-warden.yml"]
+        },
+        "cache": {
+          "description": "Local caching settings for the preset fetched from the URL.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable caching (default: false)",
+              "type": "boolean",
+              "default": false
+            },
+            "ttl": {
+              "description": "Cache TTL (default: 24h). Go time.ParseDuration format.",
+              "type": "string",
+              "default": "24h",
+              "examples": ["1h", "30m", "24h", "168h"]
+            },
+            "dir": {
+              "description": "Cache directory path (default: ~/.cache/git-warden)",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+
+    "include": {
+      "description": "List of conditional config inclusion rules (similar to git's [includeIf \"gitdir:...\"]).\nEach entry's path file is merged in order as the base, then the body is merged on top.\nPriority: body value > later include > earlier include.\nIncludes inside a remote preset config are ignored for security; includes inside included files are also ignored (no nesting). Missing files are skipped with a warning.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "description": "Path to the config file to include. '~' is expanded to the home directory; relative paths are resolved relative to the config file declaring the include.",
+            "type": "string",
+            "examples": ["~/.config/git-warden/base.yml"]
+          },
+          "gitdir": {
+            "description": "Directory glob pattern used as the inclusion condition (git includeIf gitdir semantics). Always included when empty.\n'~' is expanded to the home directory; if ending with '/', '**' is appended to match the directory and all subdirectories.",
+            "type": "string",
+            "examples": ["~/work/"]
+          }
+        }
+      }
+    },
+
+    "comment_language": {
+      "description": "Settings for checking the language used in code comments",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable comment language checking (default: true)",
+          "type": "boolean",
+          "default": true
+        },
+        "required_language": {
+          "description": "[deprecated — use locale from v1.2.0] Natural language required in comments (default: korean). Overridden when locale is set. Retained for backwards compatibility; convert to locale with 'git-warden migrate'.",
+          "deprecated": true,
+          "type": "string",
+          "enum": ["korean", "english", "japanese", "chinese", "any"],
+          "default": "korean"
+        },
+        "locale": {
+          "description": "BCP-47 locale code that automatically sets required_language. Overrides required_language when set.",
+          "type": "string",
+          "examples": ["ko", "en", "ja", "zh", "zh-hans", "zh-hant"]
+        },
+        "min_length": {
+          "description": "Minimum character count for language checking (default: 5). Comments shorter than this are not checked.",
+          "type": "integer",
+          "minimum": 1,
+          "default": 5
+        },
+        "check_mode": {
+          "description": "Check scope setting (default: diff).\n  diff: check only comments on lines added in the staged diff (fast)\n  full: check all comments in the entire staged file",
+          "type": "string",
+          "enum": ["diff", "full"],
+          "default": "diff"
+        },
+        "languages": {
+          "description": "List of programming languages to parse. Takes precedence over extensions when set.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["go", "typescript", "javascript", "java", "kotlin", "python", "c", "cpp", "csharp", "swift", "rust", "dockerfile", "markdown", "hcl"]
+          },
+          "examples": [["go", "typescript", "python"]],
+          "uniqueItems": true
+        },
+        "extensions": {
+          "description": "List of file extensions to check. Used when languages is not set.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(\\.[a-zA-Z0-9]+|dockerfile)$"
+          },
+          "default": [".go", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".java", ".kt", ".py", ".c", ".cpp", ".cs", ".swift", ".rs", ".hcl", ".tf", ".tfvars", "dockerfile"],
+          "examples": [[".go", ".ts", ".py"]]
+        },
+        "skip_directives": {
+          "description": "Additional comment prefix list to skip during checking. Merged into the built-in skip list (todo, fixme, nolint, etc.).",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["internal:", "ref:", "see:"]]
+        },
+        "ignore_files": {
+          "description": "List of file glob patterns to exclude from comment language checking. Supports '**'.",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["**/*_test.go", "vendor/**", "*.pb.go", "internal/generated/**"]]
+        },
+        "no_emoji": {
+          "description": "Whether to forbid emoji in comments (default: false).\nWhen true, reports an error if emoji are found in source code comments.",
+          "type": "boolean",
+          "default": false
+        },
+        "check_strings": {
+          "description": "Whether to apply the same language check to string literals as to comments (default: false).\nWhen true, required_language is also applied to string literals in source code.",
+          "type": "boolean",
+          "default": false
+        },
+        "skip_technical_strings": {
+          "description": "When check_strings=true, skips strings identified as technical identifiers (default: true).\nSkip conditions:\n  - Contains a slash (/) → path or MIME type (e.g. /api/v1, application/json)\n  - Pure ASCII with no lowercase letters → uppercase constant (e.g. ERR_TOKEN, MAX_SIZE)\nWhen false, all strings are subject to language checking.",
+          "type": "boolean",
+          "default": true
+        },
+        "allowed_words": {
+          "description": "List of English words to ignore in language checking.\nThe language is determined from the remaining text after removing these words from the comment.\nUseful for proper nouns, technical terms, etc.",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["TypeScript", "JavaScript", "API", "URL"]]
+        },
+        "allowed_words_file": {
+          "description": "Path to a text file containing allowed words, one per line.\nLines starting with # are treated as comments and ignored. Merged with allowed_words.",
+          "type": "string",
+          "examples": [".git-warden-words.txt"]
+        },
+        "allowed_words_url": {
+          "description": "URL to fetch the allowed words file from via HTTP/HTTPS.\nMerged with allowed_words and allowed_words_file.",
+          "type": "string",
+          "format": "uri",
+          "examples": ["https://example.com/allowed-words.txt"]
+        },
+        "allowed_words_cache": {
+          "description": "Local caching settings for allowed words fetched from the URL.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable caching (default: false)",
+              "type": "boolean",
+              "default": false
+            },
+            "ttl": {
+              "description": "Cache TTL (default: 24h). Go time.ParseDuration format.",
+              "type": "string",
+              "default": "24h",
+              "examples": ["1h", "30m", "24h", "168h"]
+            },
+            "dir": {
+              "description": "Cache directory path (default: ~/.cache/git-warden)",
+              "type": "string"
+            }
+          }
+        },
+        "file_languages": {
+          "description": "List of per-file language rules. The first matching pattern is applied (order matters).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pattern"],
+            "properties": {
+              "pattern": {
+                "description": "Glob pattern to match against file paths. Supports '**'.",
+                "type": "string",
+                "examples": ["locales/**", "i18n/**", "locale/ja/**"]
+              },
+              "locale": {
+                "description": "Natural language required in files matching this pattern. Accepts BCP-47 code (ko, en, ja, zh), legacy language name (korean, english, etc.), or 'any'.",
+                "type": "string",
+                "examples": ["any", "ko", "en", "ja", "zh", "korean", "english"]
+              },
+              "language": {
+                "description": "Language required in files matching this pattern. Accepts locale code (ko, en, ja, zh) and 'any'.",
+                "type": "string",
+                "examples": ["any", "english", "korean", "japanese", "chinese", "ko", "en", "ja", "zh"]
+              }
+            }
+          },
+          "examples": [
+            [
+              { "pattern": "locales/**", "language": "any" },
+              { "pattern": "i18n/**", "language": "english" },
+              { "pattern": "locale/ja/**", "language": "ja" }
+            ]
+          ]
+        }
+      }
+    },
+
+    "binary_file": {
+      "description": "Settings for blocking binary file (compiled executables, etc.) commits",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable binary file detection (default: true).\nDetects files reported as binary by git diff --staged --numstat and blocks commits.",
+          "type": "boolean",
+          "default": true
+        },
+        "default_policy": {
+          "description": "Policy for binaries not matched by any rule (default: block).\n  block: block (error)\n  allow: permit (pass)\n  lfs:   permit only when tracked by git LFS, otherwise block\nPriority: rules (extension match) > built-in image policy (image extension → allow) > default_policy",
+          "type": "string",
+          "enum": ["block", "allow", "lfs"],
+          "default": "block"
+        },
+        "rules": {
+          "description": "List of per-extension binary policy rules. The first matching rule is applied.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "extensions": {
+                "description": "List of file extensions to apply this policy to (.png, .jpg, etc.). Case-insensitive.",
+                "type": "array",
+                "items": { "type": "string" },
+                "examples": [[".png", ".jpg"], [".psd", ".zip"]]
+              },
+              "policy": {
+                "description": "Policy to apply (block | allow | lfs).",
+                "type": "string",
+                "enum": ["block", "allow", "lfs"]
+              }
+            }
+          },
+          "examples": [
+            [
+              { "extensions": [".psd", ".zip"], "policy": "lfs" },
+              { "extensions": [".exe"], "policy": "block" }
+            ]
+          ]
+        },
+        "ignore_files": {
+          "description": "List of file glob patterns to exclude from binary file checking. Supports '**'.\nUse to allow intentionally committed binaries such as images and fonts.",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["**/*.png", "**/*.jpg", "**/*.woff2", "**/*.pdf"]]
+        }
+      }
+    },
+
+    "lint": {
+      "description": "Syntax checking settings for data files (YAML, JSON, XML)",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable lint checking (default: true)",
+          "type": "boolean",
+          "default": true
+        },
+        "yaml": {
+          "description": "YAML syntax checking settings",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable YAML lint (default: true)",
+              "type": "boolean",
+              "default": true
+            },
+            "comment_filter": {
+              "description": "When true, a \"# git-warden: skip-lint\" comment in the file disables YAML lint for that file (default: false).",
+              "type": "boolean",
+              "default": false
+            },
+            "ignore_files": {
+              "description": "List of glob patterns to exclude from YAML lint",
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "json": {
+          "description": "JSON syntax checking settings",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable JSON lint (default: true)",
+              "type": "boolean",
+              "default": true
+            },
+            "allow_json5": {
+              "description": "Whether to allow JSON5 format (default: false).\nWhen true, allows // comments, /* */ block comments, and trailing commas.",
+              "type": "boolean",
+              "default": false
+            },
+            "comment_filter": {
+              "description": "When true, strips // and /* */ comments from .json files before strict JSON validation (JSONC mode, default: false).\n.jsonc files are always checked as JSON5 regardless of this setting.",
+              "type": "boolean",
+              "default": false
+            },
+            "ignore_files": {
+              "description": "List of glob patterns to exclude from JSON lint.\nDefault excludes: package-lock.json, yarn.lock and other auto-generated files.\nOverrides the default list when set.",
+              "type": "array",
+              "items": { "type": "string" },
+              "examples": [["package-lock.json", "*.generated.json"]]
+            }
+          }
+        },
+        "xml": {
+          "description": "XML syntax checking settings",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable XML lint (default: true)",
+              "type": "boolean",
+              "default": true
+            },
+            "ignore_files": {
+              "description": "List of glob patterns to exclude from XML lint",
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "toml": {
+          "description": "TOML syntax checking settings",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable TOML lint (default: true)",
+              "type": "boolean",
+              "default": true
+            },
+            "ignore_files": {
+              "description": "List of glob patterns to exclude from TOML lint",
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "encoding": {
+      "description": "File encoding checking settings",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable encoding checking (default: true)",
+          "type": "boolean",
+          "default": true
+        },
+        "require_utf8": {
+          "description": "Whether to require UTF-8 encoding (default: true).\nWhen true, blocks commits of text files that are not UTF-8.",
+          "type": "boolean",
+          "default": true
+        },
+        "no_invisible_chars": {
+          "description": "Whether to forbid invisible Unicode characters (NBSP, ZWSP, BiDi controls, etc.) in file content (default: false).",
+          "type": "boolean",
+          "default": false
+        },
+        "no_ambiguous_chars": {
+          "description": "Whether to forbid Unicode characters that are visually similar to ASCII but have different code points (default: false).\nDetects cases such as Cyrillic А (U+0410) vs Latin A (U+0041).",
+          "type": "boolean",
+          "default": false
+        },
+        "locale": {
+          "description": "BCP-47 locale to use for ambiguous character detection (default: ko).",
+          "type": "string",
+          "enum": ["ko", "ja", "zh-hans", "zh-hant", "ru", "_default"],
+          "default": "ko"
+        },
+        "ignore_files": {
+          "description": "List of glob patterns to exclude from encoding checking",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["**/*.bin", "legacy/**"]]
+        }
+      }
+    },
+
+    "editorconfig": {
+      "description": ".editorconfig rule checking settings",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable .editorconfig checking (default: true).\nAutomatically skipped when no .editorconfig file is found.",
+          "type": "boolean",
+          "default": true
+        },
+        "ignore_files": {
+          "description": "List of file glob patterns to exclude from editorconfig checking. Supports '**'.",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["vendor/**", "**/*.generated.go"]]
+        }
+      }
+    },
+
+    "commit_message": {
+      "description": "Commit message policy checking settings",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable commit message checking globally (default: true).\nWhen false, all sub-checks including no_ai_coauthor and no_unicode_spaces are skipped.",
+          "type": "boolean",
+          "default": true
+        },
+        "no_ai_coauthor": {
+          "description": "Whether to block Co-authored-by: trailers from AI tools (default: true).\nRejects lines matching built-in AI email patterns (Copilot, Claude, Cursor, Codeium, etc.).\nRegular human co-authors are not affected.",
+          "type": "boolean",
+          "default": true
+        },
+        "coauthor_remove_emails": {
+          "description": "Additional email addresses or glob patterns to remove on top of the built-in AI patterns.\nSupports '*' wildcard (e.g. \"*@myai.internal\"). Case-insensitive.\nBuilt-in AI patterns: *copilot*@*, noreply@anthropic.com, *@cursor.sh, *@codeium.com, *@tabnine.com, etc.",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [
+            ["*@myai.internal"],
+            ["aibot@company.com", "*@custom-ai.io"]
+          ]
+        },
+        "no_unicode_spaces": {
+          "description": "Whether to forbid non-standard Unicode space characters (default: true).\nIncludes NBSP (U+00A0), EM SPACE (U+2003), ZWSP (U+200B), BiDi control characters, etc.\nBOM (U+FEFF) is permitted as a valid encoding marker.",
+          "type": "boolean",
+          "default": true
+        },
+        "no_ambiguous_chars": {
+          "description": "Whether to forbid Unicode characters that are visually similar to ASCII but have different code points (default: true).\nExample: Cyrillic А (U+0410) vs Latin A (U+0041). Based on Gitea/VSCode Unicode data.",
+          "type": "boolean",
+          "default": true
+        },
+        "no_bad_runes": {
+          "description": "Whether to forbid invalid UTF-8 byte sequences (default: true).",
+          "type": "boolean",
+          "default": true
+        },
+        "no_emoji": {
+          "description": "Whether to forbid emoji in commit messages (default: false).\nWhen true, reports an error if the commit message contains emoji.",
+          "type": "boolean",
+          "default": false
+        },
+        "locale": {
+          "description": "BCP-47 locale to use for ambiguous character detection (default: ko).\nSelects the per-locale confusable character table (Gitea-based).",
+          "type": "string",
+          "enum": ["ko", "ja", "zh-hans", "zh-hant", "ru", "_default"],
+          "default": "ko"
+        },
+        "conventional_commit": {
+          "description": "Settings for enforcing Conventional Commits format (https://www.conventionalcommits.org/).\nFormat: <type>[(<scope>)][!]: <description>",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable conventional commit format checking (default: false)",
+              "type": "boolean",
+              "default": false
+            },
+            "types": {
+              "description": "List of allowed commit types.\nDefault: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert",
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["feat", "fix", "docs", "style", "refactor", "perf", "test", "build", "ci", "chore", "revert"]
+            },
+            "type_aliases": {
+              "description": "Localised type alias mappings.\nKey: localised type, value: standard type.\nExample: {\"feat\": \"feat\", \"fix\": \"fix\"}\nWhen set, localised types can also be used in commits.",
+              "type": "object",
+              "additionalProperties": { "type": "string" },
+              "examples": [{"feat": "feat", "fix": "fix", "docs": "docs"}]
+            },
+            "locale": {
+              "description": "Language to apply localised type defaults.\nUses built-in mappings when type_aliases is not set.\nSupported: ko, ja, zh",
+              "type": "string",
+              "enum": ["ko", "ja", "zh"],
+              "examples": ["ko", "ja", "zh"]
+            },
+            "require_scope": {
+              "description": "Whether scope is required (default: false). When true, the format feat(scope): is mandatory.",
+              "type": "boolean",
+              "default": false
+            },
+            "allow_merge_commits": {
+              "description": "Skip format checking for \"Merge ...\" commits (default: true)",
+              "type": "boolean",
+              "default": true
+            },
+            "allow_revert_commits": {
+              "description": "Skip format checking for \"Revert ...\" commits (default: true)",
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "language_check": {
+          "description": "Natural language checking settings for the commit message body",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable commit message language checking (default: false)",
+              "type": "boolean",
+              "default": false
+            },
+            "locale": {
+              "description": "Natural language required in the commit message body. Accepts BCP-47 code (ko, en, ja, zh) or legacy language name (korean, english, etc.).\nAuto-derived from commit_message.locale when empty. Overrides required_language when set.",
+              "type": "string",
+              "examples": ["ko", "en", "ja", "zh", "zh-hans", "zh-hant"]
+            },
+            "required_language": {
+              "description": "Natural language required in commit messages (default: korean)",
+              "type": "string",
+              "enum": ["korean", "english", "japanese", "chinese", "any"],
+              "default": "korean"
+            },
+            "min_length": {
+              "description": "Minimum character count for language checking (default: 5)",
+              "type": "integer",
+              "minimum": 1,
+              "default": 5
+            },
+            "skip_prefixes": {
+              "description": "List of subject line prefixes to skip language checking for.\nCommits starting with these prefixes have their entire message skipped.\nDefault: [\"Merge\", \"Revert\", \"fixup!\", \"squash!\"]",
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["Merge", "Revert", "fixup!", "squash!"],
+              "examples": [["Merge", "Revert", "fixup!", "squash!", "WIP:"]]
+            }
+          }
+        },
+        "subject_limit": {
+          "description": "Character limit settings for the commit message subject (first line)",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable subject length checking (default: false)",
+              "type": "boolean",
+              "default": false
+            },
+            "max_length": {
+              "description": "Maximum character count for the subject (default: 72)",
+              "type": "integer",
+              "minimum": 1,
+              "default": 72
+            }
+          }
+        },
+        "body_line_limit": {
+          "description": "Character limit settings for each line of the commit message body",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to enable body line length checking (default: false)",
+              "type": "boolean",
+              "default": false
+            },
+            "max_length": {
+              "description": "Maximum character count for each body line (default: 100)",
+              "type": "integer",
+              "minimum": 1,
+              "default": 100
+            }
+          }
+        }
+      }
+    },
+
+    "exceptions": {
+      "description": "Global and per-feature file exclusion pattern settings",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "global_ignore": {
+          "description": "List of file glob patterns to exclude from all checks. Supports '**'.",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["vendor/**", "third_party/**"]]
+        },
+        "comment_language_ignore": {
+          "description": "List of file glob patterns to exclude only from comment language checking. Supports '**'.",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["legacy/**", "*.generated.go"]]
+        }
+      }
+    },
+
+    "custom_rules": {
+      "description": "Regex-based custom rule settings",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commit_message": {
+          "description": "List of custom rules to apply to commit messages",
+          "type": "array",
+          "items": { "$ref": "#/definitions/customRule" }
+        },
+        "diff": {
+          "description": "List of custom rules to apply to added lines in the staged diff",
+          "type": "array",
+          "items": { "$ref": "#/definitions/customRule" }
+        }
+      }
+    },
+
+    "protected_paths": {
+      "description": "Protected path settings that block all changes (add/modify/delete) to paths matching the glob patterns.\nStronger \"complete freeze\" policy than append_only. Use for locked legacy directories, auto-generated files, released migrations, etc.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable protected path checking (default: false). Not checked when paths is empty.",
+          "type": "boolean",
+          "default": false
+        },
+        "paths": {
+          "description": "List of glob patterns to apply protected path rules to",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["legacy/**", "generated/**"]]
+        }
+      }
+    },
+
+    "append_only": {
+      "description": "Append-only settings that forbid file deletion, content modification, and mid-file insertion in specific paths.\nUse for directories such as DB migration directories where committed content must never be changed.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable append-only checking (default: false). Not checked when paths is empty.",
+          "type": "boolean",
+          "default": false
+        },
+        "paths": {
+          "description": "List of glob patterns to apply append-only rules to",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["migrations/**", "db/migrations/**"]]
+        },
+        "filename_order": {
+          "description": "Whether to check that new file names come after existing file names.\n  numeric (or empty string, default): must come after the maximum of existing files by natural (numeric) sort order\n  none: disable filename order checking",
+          "type": "string",
+          "enum": ["numeric", "none", ""],
+          "default": "numeric"
+        }
+      }
+    },
+
+    "cache_dir": {
+      "description": "Settings for checking whether files inside build artifact/cache directories (node_modules, dist, build, target, __pycache__, etc.) are committed or staged in git.\nDetermines the directory type based on parent directory indicators (go.mod, package.json, etc.).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable cache/build directory checking (default: true)",
+          "type": "boolean",
+          "default": true
+        },
+        "ignore_dirs": {
+          "description": "List of directory names to exclude from checking.\nExample: specify [\"vendor\"] for Go projects that intentionally commit vendor/.",
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["vendor"], ["node_modules", "dist"]]
+        }
+      }
+    },
+
+    "guide": {
+      "description": "Settings for per-category improvement guides printed when a check violation occurs.\nPrints remediation steps (specific commands/actions) once per category after the violation list and summary.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Whether to enable improvement guide output (default: true)",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    }
+  },
+
+  "definitions": {
+    "customRule": {
+      "description": "Regex-based custom check rule",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "Rule name (displayed in error messages)",
+          "type": "string",
+          "examples": ["no-wip", "require-issue-number"]
+        },
+        "pattern": {
+          "description": "Go regex pattern (regexp.Compile compatible)",
+          "type": "string",
+          "examples": ["(?i)\\bWIP\\b", "#[0-9]+"]
+        },
+        "message": {
+          "description": "Human-readable message to display on rule violation",
+          "type": "string"
+        },
+        "required": {
+          "description": "When true, the pattern must match (error on mismatch).\nWhen false (default), the pattern must not match (error on match — forbidden rule).",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

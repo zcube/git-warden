@@ -11,7 +11,7 @@ use std::path::Path;
 use super::schema;
 
 /// Embeds the distributed schema file (repo root) at compile time.
-const SCHEMA_JSON: &str = include_str!("../../../../.git-warden.schema.json");
+const SCHEMA_JSON: &str = include_str!("../../.git-warden.schema.json");
 
 static VALIDATOR: Lazy<Option<jsonschema::Validator>> = Lazy::new(|| {
     let value: serde_json::Value = serde_json::from_str(SCHEMA_JSON).ok()?;
