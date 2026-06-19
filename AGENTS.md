@@ -45,26 +45,48 @@ The split criterion: code that can be meaningfully reused by other applications 
 
 ## Versioning and releases
 
-### Source of truth
+### Version management
 
-`Cargo.toml` (`[workspace.package] version`) is the single source of truth.
-Use **cargo-release** to bump the version; do not edit it by hand.
+- **Source of truth: `Cargo.toml`** (`[workspace.package] version`) — managed by `cargo-release`.
+  Do not bump by hand.
+- **Version policy: `.gitversion.yml`** — `ManualDeployment` mode (GitHubFlow/v1). Versions are
+  set explicitly by the developer; gitversion-rs computes metadata (PreReleaseTag,
+  InformationalVersion) from git history.
+- **Bump rules** (used to infer the level from the commit log):
+  - `feat:` → minor
+  - `fix:` / `perf:` → patch
+  - `!` suffix or `BREAKING CHANGE:` → major
+
+### Justfile commands
 
 ```bash
-cargo release minor   # 0.0.x → 0.1.0: updates Cargo.toml, commits, tags v0.1.0
+just version        # show current FullSemVer (gitversion-rs)
+just check          # dry-run: see what cargo-release would do (patch)
+just check minor    # dry-run for a minor bump
+just bump           # bump patch: updates Cargo.toml, commits, tags, pushes
+just bump minor     # bump minor
+just bump major     # bump major
+just publish        # publish workspace to crates.io (run after bump)
 ```
 
 ### Release procedure
 
 1. Ensure `main` is green.
-2. Run `cargo release minor` (or `patch` / `major`) locally. This:
+2. Bump the version and push:
+   ```bash
+   just bump minor   # or patch / major
+   ```
+   This runs `cargo release minor --workspace --execute` which:
    - Updates `[workspace.package] version` in `Cargo.toml`
-   - Commits `"chore: release v0.1.0"`
+   - Commits `"chore: release 0.1.0"`
    - Creates annotated tag `v0.1.0`
-   - Pushes commit + tag
+   - Pushes commit + tag to origin
 3. The tag push triggers `.github/workflows/release-draft.yml`:
    - Builds 6 cross-compiled targets, signs with cosign, generates changelog with git-cliff.
 4. Trigger `.github/workflows/release-publish.yml` (manual dispatch, input: tag):
+   ```bash
+   just publish      # or trigger via GitHub UI
+   ```
    - Publishes `git-warden-core` then `git-warden` to crates.io via `cargo workspaces publish`.
    - Updates the Homebrew tap formula.
 

@@ -1,4 +1,0 @@
-workflow: GitHubFlow/v1
-tag-prefix: "[vV]?"
-next-version: 0.0.1
-commit-message-incrementing: Disabled

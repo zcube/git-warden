@@ -29,23 +29,11 @@ jobs:
       - name: Fetch main branch
         run: git fetch origin +refs/heads/main:refs/heads/main 2>/dev/null || true
 
-      - name: Install gitversion-rs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          GV_TAG=$(gh release view --repo zcube/gitversion-rs --json tagName -q .tagName)
-          gh release download "$GV_TAG" --repo zcube/gitversion-rs \
-            --pattern "gitversion-rs-${GV_TAG}-x86_64-unknown-linux-musl.tar.gz" \
-            --dir /tmp/gv
-          tar xzf "/tmp/gv/gitversion-rs-${GV_TAG}-x86_64-unknown-linux-musl.tar.gz" -C /tmp/gv
-          sudo install -m 0755 /tmp/gv/gitversion-rs /usr/local/bin/gitversion-rs
-
-      - name: Compute version
-        run: gitversion-rs --output build-server
-
-      - name: Export version output
+      - name: Extract version from tag
         id: gv
-        run: echo "SemVer=${GitVersion_SemVer}" >> "$GITHUB_OUTPUT"
+        run: |
+          TAG="${{ inputs.tag }}"
+          echo "SemVer=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Publish draft release
         env:
@@ -74,7 +62,7 @@ jobs:
       - name: Publish workspace to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo workspaces publish --from-git --yes --allow-dirty
+        run: cargo workspaces publish --from-git --yes
 
   homebrew:
     name: Update Homebrew tap
