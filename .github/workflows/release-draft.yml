@@ -116,3 +116,39 @@ jobs:
           include: README.md,README.en.md,README.ja.md,README.zh.md,LICENSE,.git-warden.schema.json,.git-warden.example.yml
           archive: git-warden_$tag_$target
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  sign:
+    name: Sign release artifacts
+    needs: [release, build]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Download artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release.outputs.tag }}
+        run: |
+          mkdir -p /tmp/artifacts
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern "*.tar.gz" --pattern "*.zip" --dir /tmp/artifacts
+
+      - name: Generate checksums
+        working-directory: /tmp/artifacts
+        run: sha256sum git-warden_* > checksums.txt
+
+      - name: Sign checksums
+        working-directory: /tmp/artifacts
+        run: cosign sign-blob --yes checksums.txt --bundle checksums.txt.sigstore.json
+
+      - name: Upload checksums and signature
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.release.outputs.tag }}
+        run: |
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+            /tmp/artifacts/checksums.txt /tmp/artifacts/checksums.txt.sigstore.json
