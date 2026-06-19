@@ -1,5 +1,7 @@
 pre-commit:
   commands:
+    fmt:
+      run: cargo fmt -- --check
     git-warden-diff:
       run: cargo run -q -p git-warden -- diff
 
