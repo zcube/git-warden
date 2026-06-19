@@ -6,6 +6,7 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "CLI tool that automatically checks Git commit messages and source code policies"
+keywords = ["commit", "pre-commit", "hook", "git"]
 
 [[bin]]
 name = "git-warden"
