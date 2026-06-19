@@ -2,7 +2,7 @@ name: Release Draft
 
 on:
   push:
-    tags: ["v*", "git-warden-v*"]
+    tags: ["v*"]
 
 permissions:
   contents: write
