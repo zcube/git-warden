@@ -12,23 +12,23 @@ authors = ["zcube <zcubekr@gmail.com>"]
 
 [workspace.dependencies]
 # internal crates
-cc-i18n = { path = "crates/cc-i18n" }
-cc-version = { path = "crates/cc-version" }
-cc-logger = { path = "crates/cc-logger" }
-cc-pathutil = { path = "crates/cc-pathutil" }
-cc-charset = { path = "crates/cc-charset" }
-cc-emoji = { path = "crates/cc-emoji" }
-cc-langdetect = { path = "crates/cc-langdetect" }
-cc-encoding = { path = "crates/cc-encoding" }
-cc-directive = { path = "crates/cc-directive" }
-cc-comment = { path = "crates/cc-comment" }
-cc-gitdiff = { path = "crates/cc-gitdiff" }
-cc-lint = { path = "crates/cc-lint" }
-cc-editorconfig = { path = "crates/cc-editorconfig" }
-cc-cachedir = { path = "crates/cc-cachedir" }
-cc-config = { path = "crates/cc-config" }
-cc-checker = { path = "crates/cc-checker" }
-cc-progress = { path = "crates/cc-progress" }
+git-warden-i18n = { path = "crates/git-warden-i18n" }
+git-warden-version = { path = "crates/git-warden-version" }
+git-warden-logger = { path = "crates/git-warden-logger" }
+git-warden-pathutil = { path = "crates/git-warden-pathutil" }
+git-warden-charset = { path = "crates/git-warden-charset" }
+git-warden-emoji = { path = "crates/git-warden-emoji" }
+git-warden-langdetect = { path = "crates/git-warden-langdetect" }
+git-warden-encoding = { path = "crates/git-warden-encoding" }
+git-warden-directive = { path = "crates/git-warden-directive" }
+git-warden-comment = { path = "crates/git-warden-comment" }
+git-warden-gitdiff = { path = "crates/git-warden-gitdiff" }
+git-warden-lint = { path = "crates/git-warden-lint" }
+git-warden-editorconfig = { path = "crates/git-warden-editorconfig" }
+git-warden-cachedir = { path = "crates/git-warden-cachedir" }
+git-warden-config = { path = "crates/git-warden-config" }
+git-warden-checker = { path = "crates/git-warden-checker" }
+git-warden-progress = { path = "crates/git-warden-progress" }
 
 # external crates
 anyhow = "1"

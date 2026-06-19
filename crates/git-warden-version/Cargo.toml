@@ -1,0 +1,9 @@
+[package]
+name = "git-warden-version"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+build = "build.rs"
+description = "Version information for git-warden"

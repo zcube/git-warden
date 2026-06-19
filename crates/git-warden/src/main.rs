@@ -27,7 +27,7 @@ pub enum CmdError {
 
 fn main() {
     // Detect locale from environment variables and initialize i18n.
-    cc_i18n::init("");
+    git_warden_i18n::init("");
 
     let matches = build_cli().get_matches();
     let code = run(&matches);
@@ -57,9 +57,9 @@ fn run(matches: &ArgMatches) -> i32 {
 
     let g = read_globals(sub);
     // Configure logger (corresponds to PersistentPreRunE).
-    cc_logger::set_quiet(g.quiet);
+    git_warden_logger::set_quiet(g.quiet);
     if g.no_color {
-        cc_logger::set_no_color(true);
+        git_warden_logger::set_no_color(true);
     }
 
     let result: Result<(), CmdError> = match name {
@@ -137,7 +137,7 @@ fn only(m: &ArgMatches) -> Vec<String> {
 }
 
 fn t(key: &str) -> String {
-    cc_i18n::t!(key)
+    git_warden_i18n::t!(key)
 }
 
 fn build_cli() -> Command {
@@ -155,7 +155,7 @@ fn build_cli() -> Command {
     };
 
     Command::new("git-warden")
-        .version(cc_version::version())
+        .version(git_warden_version::version())
         .about(t("cmd.root.short"))
         .long_about(t("cmd.root.long"))
         .subcommand_required(false)

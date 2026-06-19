@@ -4,9 +4,9 @@
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
-use cc_config::Config;
-use cc_gitdiff::FileDiff;
-use cc_progress::Step;
+use git_warden_config::Config;
+use git_warden_gitdiff::FileDiff;
+use git_warden_progress::Step;
 
 /// Check step definition. Corresponds to Go `checkStepDef`.
 pub struct StepDef {
@@ -100,7 +100,7 @@ pub fn step_defs_for(diff_mode: bool, only: &[String]) -> Result<Vec<&'static St
             continue;
         }
         if !categories.contains(&cat) {
-            return Err(cc_i18n::t!(
+            return Err(git_warden_i18n::t!(
                 "flag.only_invalid",
                 Category = cat,
                 Valid = categories.join(", ")
@@ -158,7 +158,7 @@ pub fn run_steps(
             },
         );
         steps.push(Step {
-            name: cc_i18n::t!(def.name_key),
+            name: git_warden_i18n::t!(def.name_key),
             category: def.category.to_string(),
             func,
         });
@@ -186,7 +186,7 @@ pub fn diff_steps(
             },
         );
         steps.push(Step {
-            name: cc_i18n::t!(def.name_key),
+            name: git_warden_i18n::t!(def.name_key),
             category: def.category.to_string(),
             func,
         });
@@ -201,14 +201,14 @@ fn run_dispatch(
     cancel: &AtomicBool,
 ) -> Result<Vec<String>, String> {
     match category {
-        "binary" => cc_checker::run_binary_files(cfg, files, cancel),
-        "encoding" => cc_checker::run_encoding(cfg, files, cancel),
-        "unicode" => cc_checker::run_unicode(cfg, files, cancel),
-        "lint" => cc_checker::run_lint(cfg, files, cancel),
-        "editorconfig" => cc_checker::run_editorconfig(cfg, files, cancel),
-        "comment_language" => cc_checker::run_comment_language(cfg, files, cancel),
+        "binary" => git_warden_checker::run_binary_files(cfg, files, cancel),
+        "encoding" => git_warden_checker::run_encoding(cfg, files, cancel),
+        "unicode" => git_warden_checker::run_unicode(cfg, files, cancel),
+        "lint" => git_warden_checker::run_lint(cfg, files, cancel),
+        "editorconfig" => git_warden_checker::run_editorconfig(cfg, files, cancel),
+        "comment_language" => git_warden_checker::run_comment_language(cfg, files, cancel),
         // Cache directories are checked by directory scan rather than tracked file list.
-        "cache_dir" => cc_checker::check_cache_dir_committed(cfg, cancel),
+        "cache_dir" => git_warden_checker::check_cache_dir_committed(cfg, cancel),
         _ => Ok(Vec::new()),
     }
 }
@@ -221,16 +221,16 @@ fn diff_dispatch(
 ) -> Result<Vec<String>, String> {
     match category {
         // Binary detection uses numstat, so diffs are not needed.
-        "binary" => cc_checker::check_binary_files(cfg, cancel),
-        "encoding" => cc_checker::check_encoding(cfg, cancel),
-        "unicode" => cc_checker::check_unicode(cfg, cancel),
-        "lint" => cc_checker::check_lint(cfg, cancel),
-        "editorconfig" => cc_checker::check_editorconfig(cfg, cancel),
-        "comment_language" => cc_checker::check_diff(cfg, diffs, cancel),
-        "custom_rules" => cc_checker::check_diff_custom_rules(cfg, diffs, cancel),
-        "protected_paths" => cc_checker::check_protected_paths(cfg, diffs, cancel),
-        "append_only" => cc_checker::check_append_only(cfg, diffs, cancel),
-        "cache_dir" => cc_checker::check_cache_dir_staged(cfg, diffs, cancel),
+        "binary" => git_warden_checker::check_binary_files(cfg, cancel),
+        "encoding" => git_warden_checker::check_encoding(cfg, cancel),
+        "unicode" => git_warden_checker::check_unicode(cfg, cancel),
+        "lint" => git_warden_checker::check_lint(cfg, cancel),
+        "editorconfig" => git_warden_checker::check_editorconfig(cfg, cancel),
+        "comment_language" => git_warden_checker::check_diff(cfg, diffs, cancel),
+        "custom_rules" => git_warden_checker::check_diff_custom_rules(cfg, diffs, cancel),
+        "protected_paths" => git_warden_checker::check_protected_paths(cfg, diffs, cancel),
+        "append_only" => git_warden_checker::check_append_only(cfg, diffs, cancel),
+        "cache_dir" => git_warden_checker::check_cache_dir_staged(cfg, diffs, cancel),
         _ => Ok(Vec::new()),
     }
 }

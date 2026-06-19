@@ -5,22 +5,23 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
+description = "CLI tool that automatically checks Git commit messages and source code policies"
 
 [[bin]]
 name = "git-warden"
 path = "src/main.rs"
 
 [dependencies]
-cc-checker.workspace = true
-cc-config.workspace = true
-cc-gitdiff.workspace = true
-cc-progress.workspace = true
-cc-cachedir.workspace = true
-cc-i18n.workspace = true
-cc-version.workspace = true
-cc-logger.workspace = true
-cc-langdetect.workspace = true
-cc-encoding.workspace = true
+git-warden-checker.workspace = true
+git-warden-config.workspace = true
+git-warden-gitdiff.workspace = true
+git-warden-progress.workspace = true
+git-warden-cachedir.workspace = true
+git-warden-i18n.workspace = true
+git-warden-version.workspace = true
+git-warden-logger.workspace = true
+git-warden-langdetect.workspace = true
+git-warden-encoding.workspace = true
 clap.workspace = true
 
 [dev-dependencies]

@@ -4,8 +4,8 @@ use std::collections::BTreeMap;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
-use cc_config::Config;
-use cc_progress::{format_json, run_with_progress, summary, Options, Step, StepResult};
+use git_warden_config::Config;
+use git_warden_progress::{format_json, run_with_progress, summary, Options, Step, StepResult};
 
 use crate::{CmdError, Globals};
 
@@ -17,7 +17,7 @@ pub fn guide_enabled(g: &Globals, cfg: &Config) -> bool {
 /// Guide text for a category. Returns empty string if the key (guide.<category>) is missing. Corresponds to Go `guideText`.
 fn guide_text(category: &str) -> String {
     let key = format!("guide.{category}");
-    let text = cc_i18n::translate(&key, &[]);
+    let text = git_warden_i18n::translate(&key, &[]);
     if text == format!("[{key}]") {
         String::new()
     } else {
@@ -52,7 +52,7 @@ fn print_guides(categories: &[String], guides: &BTreeMap<String, String>) {
         return;
     }
     eprintln!();
-    eprintln!("{}", cc_i18n::t!("guide.header"));
+    eprintln!("{}", git_warden_i18n::t!("guide.header"));
     for cat in categories {
         if let Some(text) = guides.get(cat) {
             eprintln!("  [{cat}] {text}");
@@ -108,7 +108,7 @@ pub fn run_steps_and_report(
         if total > 0 {
             eprintln!(
                 "{}",
-                cc_i18n::t!("summary.violations", Count = total, Checks = checks)
+                git_warden_i18n::t!("summary.violations", Count = total, Checks = checks)
             );
         }
         if with_guide {

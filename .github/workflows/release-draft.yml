@@ -97,19 +97,13 @@ jobs:
         with:
           ref: refs/tags/${{ needs.release.outputs.tag }}
 
-      - name: Inject version into Cargo.toml
-        shell: bash
+      - name: Install cargo-workspaces
+        run: cargo install cargo-workspaces --locked
+
+      - name: Set workspace version
         env:
           GV_VERSION: ${{ needs.release.outputs.version }}
-        run: |
-          python3 - "$GV_VERSION" <<'PY'
-          import re, sys
-          v = sys.argv[1]
-          s = open("Cargo.toml", encoding="utf-8").read()
-          s = re.sub(r'(?m)^version = "[^"]*"', f'version = "{v}"', s, count=1)
-          open("Cargo.toml", "w", encoding="utf-8").write(s)
-          print(f"version injected: {v}")
-          PY
+        run: cargo workspaces version custom "${GV_VERSION}" --yes --no-git-commit
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable

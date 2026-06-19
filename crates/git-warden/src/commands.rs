@@ -6,7 +6,7 @@ use std::process::Command;
 use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
-use cc_config::Config;
+use git_warden_config::Config;
 
 use crate::output::{guide_enabled, print_commit_message_guide, run_steps_and_report};
 use crate::steps::{cfg_with_only_enabled, diff_steps, run_steps, step_defs_for};
@@ -37,7 +37,7 @@ fn require_config_skip(g: &Globals) -> bool {
 }
 
 fn load_cfg(g: &Globals) -> Result<Config, CmdError> {
-    cc_config::load(&resolve_config_file_path(&g.config_file))
+    git_warden_config::load(&resolve_config_file_path(&g.config_file))
         .map_err(|e| CmdError::Msg(format!("failed to load config: {e}")))
 }
 
@@ -54,7 +54,7 @@ pub fn cmd_run(g: &Globals, format: &str, only: &[String]) -> Result<(), CmdErro
     if !only.is_empty() {
         cfg = cfg_with_only_enabled(&cfg, &defs);
     }
-    let files = cc_checker::get_tracked_files()
+    let files = git_warden_checker::get_tracked_files()
         .map_err(|e| CmdError::Msg(format!("failed to list tracked files: {e}")))?;
     let cfg = Arc::new(cfg);
     let with_guide = guide_enabled(g, &cfg);
@@ -74,8 +74,8 @@ pub fn cmd_diff(
         return Ok(());
     }
     let defs = step_defs_for(true, only).map_err(CmdError::Msg)?;
-    let spec = cc_gitdiff::spec_from_args(args, staged).map_err(CmdError::Msg)?;
-    cc_gitdiff::set_spec(spec);
+    let spec = git_warden_gitdiff::spec_from_args(args, staged).map_err(CmdError::Msg)?;
+    git_warden_gitdiff::set_spec(spec);
 
     let mut cfg = load_cfg(g)?;
     if !cfg.is_enabled() {
@@ -84,7 +84,7 @@ pub fn cmd_diff(
     if !only.is_empty() {
         cfg = cfg_with_only_enabled(&cfg, &defs);
     }
-    let diffs = cc_gitdiff::get_staged_diff().map_err(CmdError::Msg)?;
+    let diffs = git_warden_gitdiff::get_staged_diff().map_err(CmdError::Msg)?;
     let cfg = Arc::new(cfg);
     let with_guide = guide_enabled(g, &cfg);
     let steps = diff_steps(&defs, cfg.clone(), Arc::new(diffs));
@@ -104,7 +104,7 @@ pub fn cmd_msg(g: &Globals, msg_file: &str, fix: bool) -> Result<(), CmdError> {
         .map_err(|e| CmdError::Msg(format!("failed to read commit message file: {e}")))?;
 
     if fix {
-        let result = cc_checker::fix_msg(&cfg, &content);
+        let result = git_warden_checker::fix_msg(&cfg, &content);
         if result.needs_fixing() {
             std::fs::write(msg_file, &result.fixed)
                 .map_err(|e| CmdError::Msg(format!("failed to write fixed commit message: {e}")))?;
@@ -112,7 +112,7 @@ pub fn cmd_msg(g: &Globals, msg_file: &str, fix: bool) -> Result<(), CmdError> {
         }
     }
 
-    let errs = cc_checker::check_msg(&cfg, &content);
+    let errs = git_warden_checker::check_msg(&cfg, &content);
     if !errs.is_empty() {
         for e in &errs {
             eprintln!("{e}");
@@ -159,13 +159,13 @@ pub fn cmd_push(g: &Globals, range: &str) -> Result<(), CmdError> {
                 for hash in hashes {
                     match get_push_commit_message(&hash) {
                         Ok(msg) => {
-                            for e in cc_checker::check_msg(&cfg, msg.as_bytes()) {
+                            for e in git_warden_checker::check_msg(&cfg, msg.as_bytes()) {
                                 all_errs.push(format!("[{}] {}", &hash[..7.min(hash.len())], e));
                             }
                         }
                         Err(err) => eprintln!(
                             "{}",
-                            cc_i18n::t!(
+                            git_warden_i18n::t!(
                                 "cmd.push.warn_msg_failed",
                                 Hash = &hash[..7.min(hash.len())],
                                 Error = err
@@ -176,7 +176,7 @@ pub fn cmd_push(g: &Globals, range: &str) -> Result<(), CmdError> {
             }
             Err(err) => eprintln!(
                 "{}",
-                cc_i18n::t!("cmd.push.warn_list_failed", Range = r, Error = err)
+                git_warden_i18n::t!("cmd.push.warn_list_failed", Range = r, Error = err)
             ),
         }
     }
@@ -212,7 +212,10 @@ fn parse_push_ranges(input: &str) -> Vec<String> {
         if is_push_zero_sha(remote_sha) {
             let base = find_push_remote_base();
             if base.is_empty() {
-                eprintln!("{}", cc_i18n::t!("cmd.push.warn_no_base", Ref = parts[0]));
+                eprintln!(
+                    "{}",
+                    git_warden_i18n::t!("cmd.push.warn_no_base", Ref = parts[0])
+                );
                 continue;
             }
             ranges.push(format!("{base}..{local_sha}"));
@@ -315,7 +318,7 @@ pub fn cmd_prepare_msg(g: &Globals, msg_file: &str, source: Option<&str>) -> Res
 }
 
 fn prepare_msg_header_line() -> String {
-    format!("# {}", cc_i18n::t!("cmd.prepare_msg.hint_header"))
+    format!("# {}", git_warden_i18n::t!("cmd.prepare_msg.hint_header"))
 }
 
 fn prepare_msg_hint(cfg: &Config) -> String {
@@ -325,23 +328,23 @@ fn prepare_msg_hint(cfg: &Config) -> String {
     }
     let mut lines = Vec::new();
     if cm.conventional_commit.is_enabled() {
-        lines.push(cc_i18n::t!("cmd.prepare_msg.hint_format"));
-        lines.push(cc_i18n::t!(
+        lines.push(git_warden_i18n::t!("cmd.prepare_msg.hint_format"));
+        lines.push(git_warden_i18n::t!(
             "cmd.prepare_msg.hint_types",
             Types = cm.conventional_commit.get_all_allowed_types().join(", ")
         ));
     }
     if cm.language_check.is_enabled() {
         let lang = cm.language_check.get_locale();
-        if lang != cc_langdetect::ANY {
-            lines.push(cc_i18n::t!(
+        if lang != git_warden_langdetect::ANY {
+            lines.push(git_warden_i18n::t!(
                 "cmd.prepare_msg.hint_language",
                 Language = language_display_name(&lang)
             ));
         }
     }
     if cm.is_no_ai_coauthor() {
-        lines.push(cc_i18n::t!("cmd.prepare_msg.hint_coauthor"));
+        lines.push(git_warden_i18n::t!("cmd.prepare_msg.hint_coauthor"));
     }
     if lines.is_empty() {
         return String::new();
@@ -359,7 +362,7 @@ fn prepare_msg_hint(cfg: &Config) -> String {
 
 fn language_display_name(lang: &str) -> String {
     let key = format!("lang.{lang}");
-    let name = cc_i18n::translate(&key, &[]);
+    let name = git_warden_i18n::translate(&key, &[]);
     if name == format!("[{key}]") {
         lang.to_string()
     } else {
@@ -372,7 +375,7 @@ pub fn cmd_fix(g: &Globals, dry_run: bool) -> Result<(), CmdError> {
     let cfg = load_cfg(g)?;
     let files = get_staged_files_for_fix().map_err(CmdError::Msg)?;
     if files.is_empty() {
-        println!("{}", cc_i18n::t!("cmd.fix.no_staged_files"));
+        println!("{}", git_warden_i18n::t!("cmd.fix.no_staged_files"));
         return Ok(());
     }
     let mut fixed_count = 0;
@@ -382,15 +385,15 @@ pub fn cmd_fix(g: &Globals, dry_run: bool) -> Result<(), CmdError> {
             Err(e) => {
                 eprintln!(
                     "{}",
-                    cc_i18n::t!("cmd.fix.warn_read_failed", Path = path, Error = e)
+                    git_warden_i18n::t!("cmd.fix.warn_read_failed", Path = path, Error = e)
                 );
                 continue;
             }
         };
-        if cc_encoding::is_binary(&content) {
+        if git_warden_encoding::is_binary(&content) {
             continue;
         }
-        let result = cc_checker::fix_file_content(&cfg, &content);
+        let result = git_warden_checker::fix_file_content(&cfg, &content);
         if !result.needs_fixing() {
             continue;
         }
@@ -411,16 +414,16 @@ pub fn cmd_fix(g: &Globals, dry_run: bool) -> Result<(), CmdError> {
     }
 
     if fixed_count == 0 {
-        println!("{}", cc_i18n::t!("cmd.fix.no_issues"));
+        println!("{}", git_warden_i18n::t!("cmd.fix.no_issues"));
     } else if dry_run {
         println!(
             "{}",
-            cc_i18n::t!("cmd.fix.dry_run_summary", Count = fixed_count)
+            git_warden_i18n::t!("cmd.fix.dry_run_summary", Count = fixed_count)
         );
     } else {
         println!(
             "{}",
-            cc_i18n::t!("cmd.fix.fixed_summary", Count = fixed_count)
+            git_warden_i18n::t!("cmd.fix.fixed_summary", Count = fixed_count)
         );
     }
     Ok(())
@@ -431,7 +434,7 @@ fn get_staged_files_for_fix() -> Result<Vec<String>, String> {
         .args(["diff", "--staged", "--name-only", "--diff-filter=ACM", "-z"])
         .output()
         .map_err(|e| format!("git diff --staged: {e}"))?;
-    Ok(cc_gitdiff::split_null_separated(&out.stdout))
+    Ok(git_warden_gitdiff::split_null_separated(&out.stdout))
 }
 
 fn run_git_add(path: &str) -> Result<(), String> {
@@ -450,33 +453,36 @@ fn run_git_add(path: &str) -> Result<(), String> {
 
 // ── version ──
 pub fn cmd_version() {
-    println!("git-warden {}", cc_version::version());
+    println!("git-warden {}", git_warden_version::version());
     println!(
         "{}",
-        cc_i18n::t!("version.commit", Value = cc_version::commit())
+        git_warden_i18n::t!("version.commit", Value = git_warden_version::commit())
     );
     println!(
         "{}",
-        cc_i18n::t!("version.build_time", Value = cc_version::build_time())
+        git_warden_i18n::t!(
+            "version.build_time",
+            Value = git_warden_version::build_time()
+        )
     );
 }
 
 // ── validate ──
 pub fn cmd_validate(g: &Globals) -> Result<(), CmdError> {
     let path = resolve_config_file_path(&g.config_file);
-    let cfg = cc_config::load(&path).map_err(CmdError::Msg)?;
-    let mut warnings = cc_config::validate(&cfg, &path);
+    let cfg = git_warden_config::load(&path).map_err(CmdError::Msg)?;
+    let mut warnings = git_warden_config::validate(&cfg, &path);
     // Enhancement: also validate against JSON Schema to catch unknown (typo'd) fields and enum
     // violations that serde silently ignores.
-    warnings.extend(cc_config::validate_schema_file(&path));
+    warnings.extend(git_warden_config::validate_schema_file(&path));
     if warnings.is_empty() {
-        println!("{}", cc_i18n::t!("validate.config_valid"));
+        println!("{}", git_warden_i18n::t!("validate.config_valid"));
         return Ok(());
     }
     for w in &warnings {
         eprintln!("{w}");
     }
-    Err(CmdError::Msg(cc_i18n::t!(
+    Err(CmdError::Msg(git_warden_i18n::t!(
         "validate.warnings_found",
         Count = warnings.len()
     )))
@@ -488,38 +494,41 @@ pub fn cmd_migrate(g: &Globals, dry_run: bool) -> Result<(), CmdError> {
     let data = match std::fs::read(&path) {
         Ok(d) => d,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            return Err(CmdError::Msg(cc_i18n::t!(
+            return Err(CmdError::Msg(git_warden_i18n::t!(
                 "migrate.file_not_found",
                 Path = path
             )));
         }
         Err(e) => return Err(CmdError::Msg(e.to_string())),
     };
-    let result = cc_config::schema::migrate(&data)
-        .map_err(|e| CmdError::Msg(cc_i18n::t!("migrate.failed", Error = e)))?;
+    let result = git_warden_config::schema::migrate(&data)
+        .map_err(|e| CmdError::Msg(git_warden_i18n::t!("migrate.failed", Error = e)))?;
 
-    if result.detected_version == cc_config::schema::Version::Current {
-        println!("{}", cc_i18n::t!("migrate.already_current", Path = path));
+    if result.detected_version == git_warden_config::schema::Version::Current {
+        println!(
+            "{}",
+            git_warden_i18n::t!("migrate.already_current", Path = path)
+        );
         return Ok(());
     }
     println!(
         "{}",
-        cc_i18n::t!(
+        git_warden_i18n::t!(
             "migrate.detected_version",
             Version = result.detected_version.as_str()
         )
     );
     for desc in &result.applied {
-        println!("{}", cc_i18n::t!("migrate.change", Desc = desc));
+        println!("{}", git_warden_i18n::t!("migrate.change", Desc = desc));
     }
     if dry_run {
-        println!("{}", cc_i18n::t!("migrate.dry_run_header"));
+        println!("{}", git_warden_i18n::t!("migrate.dry_run_header"));
         print!("{}", String::from_utf8_lossy(&result.data));
         return Ok(());
     }
     std::fs::write(&path, &result.data)
-        .map_err(|e| CmdError::Msg(cc_i18n::t!("migrate.save_failed", Error = e)))?;
-    println!("{}", cc_i18n::t!("migrate.saved", Path = path));
+        .map_err(|e| CmdError::Msg(git_warden_i18n::t!("migrate.save_failed", Error = e)))?;
+    println!("{}", git_warden_i18n::t!("migrate.saved", Path = path));
     Ok(())
 }
 

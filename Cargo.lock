@@ -316,148 +316,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cc-cachedir"
-version = "0.0.1"
-dependencies = [
- "tempfile",
-]
-
-[[package]]
-name = "cc-charset"
-version = "0.0.1"
-
-[[package]]
-name = "cc-checker"
-version = "0.0.1"
-dependencies = [
- "cc-cachedir",
- "cc-charset",
- "cc-comment",
- "cc-config",
- "cc-directive",
- "cc-editorconfig",
- "cc-emoji",
- "cc-encoding",
- "cc-gitdiff",
- "cc-i18n",
- "cc-langdetect",
- "cc-lint",
- "cc-logger",
- "cc-pathutil",
- "once_cell",
- "rayon",
- "regex",
- "tempfile",
-]
-
-[[package]]
-name = "cc-comment"
-version = "0.0.1"
-
-[[package]]
-name = "cc-config"
-version = "0.0.1"
-dependencies = [
- "cc-i18n",
- "cc-langdetect",
- "cc-logger",
- "cc-pathutil",
- "dirs",
- "jsonschema",
- "once_cell",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2 0.11.0",
- "tempfile",
- "ureq",
-]
-
-[[package]]
-name = "cc-directive"
-version = "0.0.1"
-dependencies = [
- "cc-comment",
- "cc-langdetect",
-]
-
-[[package]]
-name = "cc-editorconfig"
-version = "0.0.1"
-dependencies = [
- "ec4rs",
- "tempfile",
-]
-
-[[package]]
-name = "cc-emoji"
-version = "0.0.1"
-
-[[package]]
-name = "cc-encoding"
-version = "0.0.1"
-dependencies = [
- "chardetng",
- "encoding_rs",
- "infer",
-]
-
-[[package]]
-name = "cc-gitdiff"
-version = "0.0.1"
-dependencies = [
- "once_cell",
- "tempfile",
-]
-
-[[package]]
-name = "cc-i18n"
-version = "0.0.1"
-dependencies = [
- "rust-i18n",
-]
-
-[[package]]
-name = "cc-langdetect"
-version = "0.0.1"
-
-[[package]]
-name = "cc-lint"
-version = "0.0.1"
-dependencies = [
- "quick-xml",
- "serde",
- "serde_json",
- "serde_yaml",
- "toml 1.1.2+spec-1.1.0",
-]
-
-[[package]]
-name = "cc-logger"
-version = "0.0.1"
-dependencies = [
- "once_cell",
-]
-
-[[package]]
-name = "cc-pathutil"
-version = "0.0.1"
-
-[[package]]
-name = "cc-progress"
-version = "0.0.1"
-dependencies = [
- "crossterm",
- "ratatui",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "cc-version"
-version = "0.0.1"
-
-[[package]]
 name = "cfb"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1147,20 +1005,162 @@ name = "git-warden"
 version = "0.0.1"
 dependencies = [
  "assert_cmd",
- "cc-cachedir",
- "cc-checker",
- "cc-config",
- "cc-encoding",
- "cc-gitdiff",
- "cc-i18n",
- "cc-langdetect",
- "cc-logger",
- "cc-progress",
- "cc-version",
  "clap",
+ "git-warden-cachedir",
+ "git-warden-checker",
+ "git-warden-config",
+ "git-warden-encoding",
+ "git-warden-gitdiff",
+ "git-warden-i18n",
+ "git-warden-langdetect",
+ "git-warden-logger",
+ "git-warden-progress",
+ "git-warden-version",
  "predicates",
  "tempfile",
 ]
+
+[[package]]
+name = "git-warden-cachedir"
+version = "0.0.1"
+dependencies = [
+ "tempfile",
+]
+
+[[package]]
+name = "git-warden-charset"
+version = "0.0.1"
+
+[[package]]
+name = "git-warden-checker"
+version = "0.0.1"
+dependencies = [
+ "git-warden-cachedir",
+ "git-warden-charset",
+ "git-warden-comment",
+ "git-warden-config",
+ "git-warden-directive",
+ "git-warden-editorconfig",
+ "git-warden-emoji",
+ "git-warden-encoding",
+ "git-warden-gitdiff",
+ "git-warden-i18n",
+ "git-warden-langdetect",
+ "git-warden-lint",
+ "git-warden-logger",
+ "git-warden-pathutil",
+ "once_cell",
+ "rayon",
+ "regex",
+ "tempfile",
+]
+
+[[package]]
+name = "git-warden-comment"
+version = "0.0.1"
+
+[[package]]
+name = "git-warden-config"
+version = "0.0.1"
+dependencies = [
+ "dirs",
+ "git-warden-i18n",
+ "git-warden-langdetect",
+ "git-warden-logger",
+ "git-warden-pathutil",
+ "jsonschema",
+ "once_cell",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2 0.11.0",
+ "tempfile",
+ "ureq",
+]
+
+[[package]]
+name = "git-warden-directive"
+version = "0.0.1"
+dependencies = [
+ "git-warden-comment",
+ "git-warden-langdetect",
+]
+
+[[package]]
+name = "git-warden-editorconfig"
+version = "0.0.1"
+dependencies = [
+ "ec4rs",
+ "tempfile",
+]
+
+[[package]]
+name = "git-warden-emoji"
+version = "0.0.1"
+
+[[package]]
+name = "git-warden-encoding"
+version = "0.0.1"
+dependencies = [
+ "chardetng",
+ "encoding_rs",
+ "infer",
+]
+
+[[package]]
+name = "git-warden-gitdiff"
+version = "0.0.1"
+dependencies = [
+ "once_cell",
+ "tempfile",
+]
+
+[[package]]
+name = "git-warden-i18n"
+version = "0.0.1"
+dependencies = [
+ "rust-i18n",
+]
+
+[[package]]
+name = "git-warden-langdetect"
+version = "0.0.1"
+
+[[package]]
+name = "git-warden-lint"
+version = "0.0.1"
+dependencies = [
+ "quick-xml",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "toml 1.1.2+spec-1.1.0",
+]
+
+[[package]]
+name = "git-warden-logger"
+version = "0.0.1"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
+name = "git-warden-pathutil"
+version = "0.0.1"
+
+[[package]]
+name = "git-warden-progress"
+version = "0.0.1"
+dependencies = [
+ "crossterm",
+ "ratatui",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "git-warden-version"
+version = "0.0.1"
 
 [[package]]
 name = "glob"
