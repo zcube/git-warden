@@ -8,12 +8,12 @@ use crate::{CmdError, Globals};
 // ── clean ──
 pub fn cmd_clean(g: &Globals, yes: bool) -> Result<(), CmdError> {
     let cwd = std::env::current_dir().map_err(|e| CmdError::Msg(e.to_string()))?;
-    let repo_root = match git_warden_cachedir::find_repo_root(&cwd) {
+    let repo_root = match git_warden_core::cachedir::find_repo_root(&cwd) {
         Ok(r) => r,
         Err(_) => {
             eprintln!(
                 "{}",
-                git_warden_i18n::t!("cmd.clean.not_in_repo", Path = cwd.display())
+                git_warden_core::t!("cmd.clean.not_in_repo", Path = cwd.display())
             );
             return Err(CmdError::Silent);
         }
@@ -22,13 +22,13 @@ pub fn cmd_clean(g: &Globals, yes: bool) -> Result<(), CmdError> {
     if !g.quiet {
         eprintln!(
             "{}",
-            git_warden_i18n::t!("cmd.clean.scanning", Path = repo_root.display())
+            git_warden_core::t!("cmd.clean.scanning", Path = repo_root.display())
         );
     }
 
-    let dirs = git_warden_cachedir::find_cache_dirs_in_repo(&repo_root);
+    let dirs = git_warden_core::cachedir::find_cache_dirs_in_repo(&repo_root);
     if dirs.is_empty() {
-        println!("{}", git_warden_i18n::t!("cmd.clean.no_cache_dirs"));
+        println!("{}", git_warden_core::t!("cmd.clean.no_cache_dirs"));
         return Ok(());
     }
 
@@ -45,8 +45,8 @@ pub fn cmd_clean(g: &Globals, yes: bool) -> Result<(), CmdError> {
             .strip_prefix(&repo_root)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|_| d.to_string_lossy().to_string());
-        let size = git_warden_cachedir::get_dir_size(d);
-        let tracked = git_warden_cachedir::list_tracked_entries(&repo_root, d)
+        let size = git_warden_core::cachedir::get_dir_size(d);
+        let tracked = git_warden_core::cachedir::list_tracked_entries(&repo_root, d)
             .map(|v| v.len())
             .unwrap_or(0);
         entries.push(Entry {
@@ -61,43 +61,44 @@ pub fn cmd_clean(g: &Globals, yes: bool) -> Result<(), CmdError> {
 
     println!(
         "{}",
-        git_warden_i18n::t!(
+        git_warden_core::t!(
             "cmd.clean.found_header",
             Count = entries.len(),
-            Size = git_warden_cachedir::format_bytes(total)
+            Size = git_warden_core::cachedir::format_bytes(total)
         )
     );
     for e in &entries {
         let tracked = if e.tracked > 0 {
-            git_warden_i18n::t!("cmd.clean.entry_tracked", Count = e.tracked)
+            git_warden_core::t!("cmd.clean.entry_tracked", Count = e.tracked)
         } else {
             String::new()
         };
         println!(
             "{}",
-            git_warden_i18n::t!(
+            git_warden_core::t!(
                 "cmd.clean.entry",
                 Path = e.rel,
-                Size = git_warden_cachedir::format_bytes(e.size),
+                Size = git_warden_core::cachedir::format_bytes(e.size),
                 Tracked = tracked
             )
         );
     }
 
     if !yes {
-        println!("{}", git_warden_i18n::t!("cmd.clean.dry_run_hint"));
+        println!("{}", git_warden_core::t!("cmd.clean.dry_run_hint"));
         return Ok(());
     }
 
     let mut freed = 0i64;
     let mut cleaned = 0;
     for e in &entries {
-        let untracked = match git_warden_cachedir::list_untracked_entries(&repo_root, &e.abs) {
+        let untracked = match git_warden_core::cachedir::list_untracked_entries(&repo_root, &e.abs)
+        {
             Ok(u) => u,
             Err(_) => continue,
         };
         for p in &untracked {
-            let size = git_warden_cachedir::get_dir_size(p);
+            let size = git_warden_core::cachedir::get_dir_size(p);
             if std::fs::remove_dir_all(p).is_ok() || std::fs::remove_file(p).is_ok() {
                 freed += size;
             }
@@ -106,9 +107,9 @@ pub fn cmd_clean(g: &Globals, yes: bool) -> Result<(), CmdError> {
     }
     println!(
         "{}",
-        git_warden_i18n::t!(
+        git_warden_core::t!(
             "cmd.clean.cleaned_summary",
-            Size = git_warden_cachedir::format_bytes(freed),
+            Size = git_warden_core::cachedir::format_bytes(freed),
             Count = cleaned
         )
     );
@@ -235,16 +236,16 @@ pub fn cmd_analyze(_g: &Globals) -> Result<(), CmdError> {
     // Sort by count descending, then name ascending for deterministic output.
     langs.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
 
-    println!("{}", git_warden_i18n::t!("analyze.header"));
+    println!("{}", git_warden_core::t!("analyze.header"));
     println!();
-    println!("{}", git_warden_i18n::t!("analyze.detected_languages"));
+    println!("{}", git_warden_core::t!("analyze.detected_languages"));
     if langs.is_empty() {
-        println!("{}", git_warden_i18n::t!("analyze.no_languages"));
+        println!("{}", git_warden_core::t!("analyze.no_languages"));
     }
     for (name, count) in &langs {
         println!(
             "{}",
-            git_warden_i18n::t!("analyze.lang_entry", Name = name, Count = count)
+            git_warden_core::t!("analyze.lang_entry", Name = name, Count = count)
         );
     }
     println!();
@@ -255,25 +256,25 @@ pub fn cmd_analyze(_g: &Globals) -> Result<(), CmdError> {
         .filter(|(n, _)| !data_for_prog.contains(n))
         .collect();
 
-    println!("{}", git_warden_i18n::t!("analyze.lint_config_status"));
+    println!("{}", git_warden_core::t!("analyze.lint_config_status"));
     if programming.is_empty() {
-        println!("{}", git_warden_i18n::t!("analyze.no_programming_langs"));
+        println!("{}", git_warden_core::t!("analyze.no_programming_langs"));
     }
     for (name, _) in &programming {
         match check_lint_config(name) {
             Some(config) => println!(
                 "{}",
-                git_warden_i18n::t!("analyze.lint_found", Language = name, Config = config)
+                git_warden_core::t!("analyze.lint_found", Language = name, Config = config)
             ),
             None => println!(
                 "{}",
-                git_warden_i18n::t!("analyze.lint_not_found", Language = name)
+                git_warden_core::t!("analyze.lint_not_found", Language = name)
             ),
         }
     }
     println!();
 
-    println!("{}", git_warden_i18n::t!("analyze.project_config"));
+    println!("{}", git_warden_core::t!("analyze.project_config"));
     for f in [
         ".editorconfig",
         ".git-warden.yml",
@@ -291,11 +292,11 @@ pub fn cmd_analyze(_g: &Globals) -> Result<(), CmdError> {
         .filter(|(n, _)| data_types.contains(n))
         .collect();
     if !data_langs.is_empty() {
-        println!("{}", git_warden_i18n::t!("analyze.data_files"));
+        println!("{}", git_warden_core::t!("analyze.data_files"));
         for (name, count) in &data_langs {
             println!(
                 "{}",
-                git_warden_i18n::t!("analyze.lang_entry", Name = name, Count = count)
+                git_warden_core::t!("analyze.lang_entry", Name = name, Count = count)
             );
         }
         println!();
@@ -311,7 +312,7 @@ fn analyze_tracked_files() -> Result<Vec<String>, String> {
     if !out.status.success() {
         return Err("git ls-files failed".into());
     }
-    Ok(git_warden_gitdiff::split_null_separated(&out.stdout))
+    Ok(git_warden_core::gitdiff::split_null_separated(&out.stdout))
 }
 
 fn check_lint_config(language: &str) -> Option<String> {
@@ -332,12 +333,12 @@ fn check_and_report(filename: &str) {
     if Path::new(filename).exists() {
         println!(
             "{}",
-            git_warden_i18n::t!("analyze.file_found", File = filename)
+            git_warden_core::t!("analyze.file_found", File = filename)
         );
     } else {
         println!(
             "{}",
-            git_warden_i18n::t!("analyze.file_not_found", File = filename)
+            git_warden_core::t!("analyze.file_not_found", File = filename)
         );
     }
 }
@@ -348,21 +349,21 @@ const CONFIG_TEMPLATE: &str = include_str!("../templates/config.yml.tmpl");
 pub fn cmd_init(g: &Globals, force: bool, lang: &str) -> Result<(), CmdError> {
     let target = &g.config_file;
     if !force && Path::new(target).exists() {
-        return Err(CmdError::Msg(git_warden_i18n::t!(
+        return Err(CmdError::Msg(git_warden_core::t!(
             "init.already_exists",
             Path = target
         )));
     }
     let content = default_config(lang);
     std::fs::write(target, content)
-        .map_err(|e| CmdError::Msg(git_warden_i18n::t!("init.fail_write", Error = e)))?;
-    println!("{}", git_warden_i18n::t!("init.created", Path = target));
+        .map_err(|e| CmdError::Msg(git_warden_core::t!("init.fail_write", Error = e)))?;
+    println!("{}", git_warden_core::t!("init.created", Path = target));
     Ok(())
 }
 
 fn default_config(lang: &str) -> String {
     let lang = if lang.is_empty() {
-        git_warden_i18n::detect_locale()
+        git_warden_core::i18n::detect_locale()
     } else {
         lang.to_lowercase()
     };

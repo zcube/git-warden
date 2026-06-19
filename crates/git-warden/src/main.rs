@@ -4,7 +4,9 @@
 mod commands;
 mod extra;
 mod output;
+mod progress;
 mod steps;
+mod version;
 
 use clap::{Arg, ArgAction, ArgMatches, Command};
 
@@ -27,7 +29,7 @@ pub enum CmdError {
 
 fn main() {
     // Detect locale from environment variables and initialize i18n.
-    git_warden_i18n::init("");
+    git_warden_core::i18n::init("");
 
     let matches = build_cli().get_matches();
     let code = run(&matches);
@@ -57,9 +59,9 @@ fn run(matches: &ArgMatches) -> i32 {
 
     let g = read_globals(sub);
     // Configure logger (corresponds to PersistentPreRunE).
-    git_warden_logger::set_quiet(g.quiet);
+    git_warden_core::logger::set_quiet(g.quiet);
     if g.no_color {
-        git_warden_logger::set_no_color(true);
+        git_warden_core::logger::set_no_color(true);
     }
 
     let result: Result<(), CmdError> = match name {
@@ -137,7 +139,7 @@ fn only(m: &ArgMatches) -> Vec<String> {
 }
 
 fn t(key: &str) -> String {
-    git_warden_i18n::t!(key)
+    git_warden_core::t!(key)
 }
 
 fn build_cli() -> Command {
@@ -155,7 +157,7 @@ fn build_cli() -> Command {
     };
 
     Command::new("git-warden")
-        .version(git_warden_version::version())
+        .version(crate::version::version())
         .about(t("cmd.root.short"))
         .long_about(t("cmd.root.long"))
         .subcommand_required(false)

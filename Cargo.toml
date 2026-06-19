@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/*"]
+members = ["crates/git-warden", "crates/git-warden-core"]
 
 [workspace.package]
 version = "0.0.1"
@@ -12,23 +12,7 @@ authors = ["zcube <zcubekr@gmail.com>"]
 
 [workspace.dependencies]
 # internal crates
-git-warden-i18n = { path = "crates/git-warden-i18n" }
-git-warden-version = { path = "crates/git-warden-version" }
-git-warden-logger = { path = "crates/git-warden-logger" }
-git-warden-pathutil = { path = "crates/git-warden-pathutil" }
-git-warden-charset = { path = "crates/git-warden-charset" }
-git-warden-emoji = { path = "crates/git-warden-emoji" }
-git-warden-langdetect = { path = "crates/git-warden-langdetect" }
-git-warden-encoding = { path = "crates/git-warden-encoding" }
-git-warden-directive = { path = "crates/git-warden-directive" }
-git-warden-comment = { path = "crates/git-warden-comment" }
-git-warden-gitdiff = { path = "crates/git-warden-gitdiff" }
-git-warden-lint = { path = "crates/git-warden-lint" }
-git-warden-editorconfig = { path = "crates/git-warden-editorconfig" }
-git-warden-cachedir = { path = "crates/git-warden-cachedir" }
-git-warden-config = { path = "crates/git-warden-config" }
-git-warden-checker = { path = "crates/git-warden-checker" }
-git-warden-progress = { path = "crates/git-warden-progress" }
+git-warden-core = { path = "crates/git-warden-core" }
 
 # external crates
 anyhow = "1"

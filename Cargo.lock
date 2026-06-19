@@ -1006,161 +1006,39 @@ version = "0.0.1"
 dependencies = [
  "assert_cmd",
  "clap",
- "git-warden-cachedir",
- "git-warden-checker",
- "git-warden-config",
- "git-warden-encoding",
- "git-warden-gitdiff",
- "git-warden-i18n",
- "git-warden-langdetect",
- "git-warden-logger",
- "git-warden-progress",
- "git-warden-version",
+ "crossterm",
+ "git-warden-core",
  "predicates",
+ "ratatui",
+ "serde",
+ "serde_json",
  "tempfile",
 ]
 
 [[package]]
-name = "git-warden-cachedir"
+name = "git-warden-core"
 version = "0.0.1"
 dependencies = [
- "tempfile",
-]
-
-[[package]]
-name = "git-warden-charset"
-version = "0.0.1"
-
-[[package]]
-name = "git-warden-checker"
-version = "0.0.1"
-dependencies = [
- "git-warden-cachedir",
- "git-warden-charset",
- "git-warden-comment",
- "git-warden-config",
- "git-warden-directive",
- "git-warden-editorconfig",
- "git-warden-emoji",
- "git-warden-encoding",
- "git-warden-gitdiff",
- "git-warden-i18n",
- "git-warden-langdetect",
- "git-warden-lint",
- "git-warden-logger",
- "git-warden-pathutil",
- "once_cell",
- "rayon",
- "regex",
- "tempfile",
-]
-
-[[package]]
-name = "git-warden-comment"
-version = "0.0.1"
-
-[[package]]
-name = "git-warden-config"
-version = "0.0.1"
-dependencies = [
+ "chardetng",
  "dirs",
- "git-warden-i18n",
- "git-warden-langdetect",
- "git-warden-logger",
- "git-warden-pathutil",
+ "ec4rs",
+ "encoding_rs",
+ "goblin",
+ "infer",
  "jsonschema",
  "once_cell",
+ "quick-xml",
+ "rayon",
+ "regex",
+ "rust-i18n",
  "serde",
  "serde_json",
  "serde_yaml",
  "sha2 0.11.0",
  "tempfile",
+ "toml 1.1.2+spec-1.1.0",
  "ureq",
 ]
-
-[[package]]
-name = "git-warden-directive"
-version = "0.0.1"
-dependencies = [
- "git-warden-comment",
- "git-warden-langdetect",
-]
-
-[[package]]
-name = "git-warden-editorconfig"
-version = "0.0.1"
-dependencies = [
- "ec4rs",
- "tempfile",
-]
-
-[[package]]
-name = "git-warden-emoji"
-version = "0.0.1"
-
-[[package]]
-name = "git-warden-encoding"
-version = "0.0.1"
-dependencies = [
- "chardetng",
- "encoding_rs",
- "infer",
-]
-
-[[package]]
-name = "git-warden-gitdiff"
-version = "0.0.1"
-dependencies = [
- "once_cell",
- "tempfile",
-]
-
-[[package]]
-name = "git-warden-i18n"
-version = "0.0.1"
-dependencies = [
- "rust-i18n",
-]
-
-[[package]]
-name = "git-warden-langdetect"
-version = "0.0.1"
-
-[[package]]
-name = "git-warden-lint"
-version = "0.0.1"
-dependencies = [
- "quick-xml",
- "serde",
- "serde_json",
- "serde_yaml",
- "toml 1.1.2+spec-1.1.0",
-]
-
-[[package]]
-name = "git-warden-logger"
-version = "0.0.1"
-dependencies = [
- "once_cell",
-]
-
-[[package]]
-name = "git-warden-pathutil"
-version = "0.0.1"
-
-[[package]]
-name = "git-warden-progress"
-version = "0.0.1"
-dependencies = [
- "crossterm",
- "ratatui",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "git-warden-version"
-version = "0.0.1"
 
 [[package]]
 name = "glob"
@@ -1190,6 +1068,17 @@ dependencies = [
  "bitflags 1.3.2",
  "ignore",
  "walkdir",
+]
+
+[[package]]
+name = "goblin"
+version = "0.10.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "17582616a7718cca54cec18e534a76c7c4aec11a8b9a85695712f262fd15a4c8"
+dependencies = [
+ "log",
+ "plain",
+ "scroll",
 ]
 
 [[package]]
@@ -2150,6 +2039,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
+name = "plain"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
+
+[[package]]
 name = "portable-atomic"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2695,6 +2590,26 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "scroll"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1257cd4248b4132760d6524d6dda4e053bc648c9070b960929bf50cfb1e7add"
+dependencies = [
+ "scroll_derive",
+]
+
+[[package]]
+name = "scroll_derive"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed76efe62313ab6610570951494bdaa81568026e0318eaa55f167de70eeea67d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.118",
+]
 
 [[package]]
 name = "security-framework"

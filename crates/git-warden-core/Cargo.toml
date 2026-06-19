@@ -1,0 +1,51 @@
+[package]
+name = "git-warden-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Core library for git-warden — reusable checker, config, and analysis logic"
+
+[lib]
+name = "git_warden_core"
+path = "src/lib.rs"
+
+[dependencies]
+# from cachedir: (no external deps)
+# from charset: (no external deps)
+# from checker: regex, once_cell, rayon
+regex.workspace = true
+once_cell.workspace = true
+rayon.workspace = true
+# from directive: (internal only)
+# from editorconfig:
+ec4rs.workspace = true
+# from encoding:
+chardetng.workspace = true
+encoding_rs.workspace = true
+infer.workspace = true
+# from gitdiff: (once_cell already listed)
+# from i18n:
+rust-i18n.workspace = true
+# from lint:
+serde.workspace = true
+serde_yaml.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+quick-xml.workspace = true
+# from logger: (once_cell already listed)
+# from config: dirs, ureq, sha2, jsonschema, serde, serde_yaml, serde_json (already listed), once_cell (already listed)
+dirs.workspace = true
+ureq.workspace = true
+sha2.workspace = true
+jsonschema = "0.46"
+# from pathutil: (no external deps)
+# from comment: (no external deps)
+# from langdetect: (no external deps)
+# from emoji: (no external deps)
+goblin.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
