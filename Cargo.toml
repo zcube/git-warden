@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/git-warden", "crates/git-warden-core"]
 
 [workspace.package]
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.88"
 license = "MIT"
@@ -12,7 +12,7 @@ authors = ["zcube <zcubekr@gmail.com>"]
 
 [workspace.dependencies]
 # internal crates
-git-warden-core = { path = "crates/git-warden-core", version = "0.1.1" }
+git-warden-core = { path = "crates/git-warden-core", version = "0.1.2" }
 
 # external crates
 anyhow = "1"
