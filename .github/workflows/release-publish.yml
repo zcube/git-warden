@@ -1,0 +1,160 @@
+name: Release Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (e.g. v0.0.1)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    name: Publish release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.gv.outputs.SemVer }}
+      tag: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: Fetch main branch
+        run: git fetch origin +refs/heads/main:refs/heads/main 2>/dev/null || true
+
+      - name: Install gitversion-rs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          GV_TAG=$(gh release view --repo zcube/gitversion-rs --json tagName -q .tagName)
+          gh release download "$GV_TAG" --repo zcube/gitversion-rs \
+            --pattern "gitversion-rs-${GV_TAG}-x86_64-unknown-linux-musl.tar.gz" \
+            --dir /tmp/gv
+          tar xzf "/tmp/gv/gitversion-rs-${GV_TAG}-x86_64-unknown-linux-musl.tar.gz" -C /tmp/gv
+          sudo install -m 0755 /tmp/gv/gitversion-rs /usr/local/bin/gitversion-rs
+
+      - name: Compute version
+        run: gitversion-rs --output build-server
+
+      - name: Export version output
+        id: gv
+        run: echo "SemVer=${GitVersion_SemVer}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          VERSION: ${{ steps.gv.outputs.SemVer }}
+        run: gh release edit "$TAG" --draft=false --title "v${VERSION}"
+
+  crates-io:
+    name: Publish to crates.io
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ needs.publish.outputs.tag }}
+
+      - name: Inject version into Cargo.toml
+        env:
+          GV_VERSION: ${{ needs.publish.outputs.version }}
+        run: |
+          python3 - "$GV_VERSION" <<'PY'
+          import re, sys
+          v = sys.argv[1]
+          s = open("Cargo.toml", encoding="utf-8").read()
+          s = re.sub(r'(?m)^version = "[^"]*"', f'version = "{v}"', s, count=1)
+          open("Cargo.toml", "w", encoding="utf-8").write(s)
+          print(f"version injected: {v}")
+          PY
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p git-warden --allow-dirty
+
+  homebrew:
+    name: Update Homebrew tap
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compute SHA256 for macOS archives
+        id: sha
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.publish.outputs.tag }}
+        run: |
+          gh release download "$TAG" --repo zcube/git-warden \
+            --pattern "git-warden_${TAG}_aarch64-apple-darwin.tar.gz" \
+            --pattern "git-warden_${TAG}_x86_64-apple-darwin.tar.gz" \
+            --dir /tmp/brew
+          ARM_SHA=$(sha256sum /tmp/brew/git-warden_${TAG}_aarch64-apple-darwin.tar.gz | awk '{print $1}')
+          X86_SHA=$(sha256sum /tmp/brew/git-warden_${TAG}_x86_64-apple-darwin.tar.gz | awk '{print $1}')
+          echo "arm_sha=${ARM_SHA}" >> "$GITHUB_OUTPUT"
+          echo "x86_sha=${X86_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: zcube/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update formula
+        env:
+          TAG: ${{ needs.publish.outputs.tag }}
+          VERSION: ${{ needs.publish.outputs.version }}
+          ARM_SHA: ${{ steps.sha.outputs.arm_sha }}
+          X86_SHA: ${{ steps.sha.outputs.x86_sha }}
+        run: |
+          cat > homebrew-tap/Formula/git-warden.rb <<FORMULA
+          class GitWarden < Formula
+            desc "CLI tool that automatically checks Git commit messages and source code policies"
+            homepage "https://github.com/zcube/git-warden"
+            version "${VERSION}"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/zcube/git-warden/releases/download/${TAG}/git-warden_${TAG}_aarch64-apple-darwin.tar.gz"
+                sha256 "${ARM_SHA}"
+              end
+              on_intel do
+                url "https://github.com/zcube/git-warden/releases/download/${TAG}/git-warden_${TAG}_x86_64-apple-darwin.tar.gz"
+                sha256 "${X86_SHA}"
+              end
+            end
+
+            def install
+              bin.install "git-warden"
+            end
+
+            test do
+              system "#{bin}/git-warden", "version"
+            end
+          end
+          FORMULA
+
+      - name: Commit and push formula
+        env:
+          VERSION: ${{ needs.publish.outputs.version }}
+        run: |
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/git-warden.rb
+          git commit -m "bump git-warden to ${VERSION}"
+          git push

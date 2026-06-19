@@ -1,13 +1,8 @@
-name: Release
+name: Release Draft
 
 on:
   push:
     tags: ["v*"]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to release (e.g. v0.0.1)"
-        required: true
 
 permissions:
   contents: write
@@ -17,7 +12,7 @@ env:
 
 jobs:
   release:
-    name: Create release
+    name: Create draft release
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.gv.outputs.SemVer }}
@@ -25,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
       - name: Fetch main branch
@@ -52,7 +47,7 @@ jobs:
 
       - name: Set tag metadata
         id: meta
-        run: echo "tag=${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+        run: echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
 
       - name: Install git-cliff
         env:
@@ -72,7 +67,7 @@ jobs:
           TAG: ${{ steps.meta.outputs.tag }}
         run: git-cliff --tag "$TAG" --output CHANGELOG.md
 
-      - name: Create or update GitHub release (draft)
+      - name: Create or update GitHub draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.meta.outputs.tag }}
@@ -92,11 +87,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest }
-          - { target: aarch64-unknown-linux-gnu, os: ubuntu-latest }
-          - { target: x86_64-apple-darwin, os: macos-latest }
-          - { target: aarch64-apple-darwin, os: macos-latest }
-          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+          - { target: x86_64-unknown-linux-gnu,   os: ubuntu-latest }
+          - { target: aarch64-unknown-linux-gnu,  os: ubuntu-latest }
+          - { target: x86_64-apple-darwin,        os: macos-latest }
+          - { target: aarch64-apple-darwin,       os: macos-latest }
+          - { target: x86_64-pc-windows-msvc,     os: windows-latest }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -129,77 +124,3 @@ jobs:
           include: README.md,README.en.md,README.ja.md,README.zh.md,LICENSE,.git-warden.schema.json,.git-warden.example.yml
           archive: git-warden_$tag_$target
           token: ${{ secrets.GITHUB_TOKEN }}
-
-  homebrew:
-    name: Update Homebrew tap
-    needs: [release, build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Compute SHA256 for macOS archives
-        id: sha
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ needs.release.outputs.tag }}
-          VERSION: ${{ needs.release.outputs.version }}
-        run: |
-          gh release download "$TAG" --repo zcube/git-warden \
-            --pattern "git-warden_${TAG}_aarch64-apple-darwin.tar.gz" \
-            --pattern "git-warden_${TAG}_x86_64-apple-darwin.tar.gz" \
-            --dir /tmp/brew
-          ARM_SHA=$(sha256sum /tmp/brew/git-warden_${TAG}_aarch64-apple-darwin.tar.gz | awk '{print $1}')
-          X86_SHA=$(sha256sum /tmp/brew/git-warden_${TAG}_x86_64-apple-darwin.tar.gz | awk '{print $1}')
-          echo "arm_sha=${ARM_SHA}" >> "$GITHUB_OUTPUT"
-          echo "x86_sha=${X86_SHA}" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout homebrew tap
-        uses: actions/checkout@v4
-        with:
-          repository: zcube/homebrew-tap
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          path: homebrew-tap
-
-      - name: Update formula
-        env:
-          TAG: ${{ needs.release.outputs.tag }}
-          VERSION: ${{ needs.release.outputs.version }}
-          ARM_SHA: ${{ steps.sha.outputs.arm_sha }}
-          X86_SHA: ${{ steps.sha.outputs.x86_sha }}
-        run: |
-          cat > homebrew-tap/Formula/git-warden.rb <<FORMULA
-          class GitWarden < Formula
-            desc "CLI tool that automatically checks Git commit messages and source code policies"
-            homepage "https://github.com/zcube/git-warden"
-            version "${VERSION}"
-            license "MIT"
-
-            on_macos do
-              on_arm do
-                url "https://github.com/zcube/git-warden/releases/download/${TAG}/git-warden_${TAG}_aarch64-apple-darwin.tar.gz"
-                sha256 "${ARM_SHA}"
-              end
-              on_intel do
-                url "https://github.com/zcube/git-warden/releases/download/${TAG}/git-warden_${TAG}_x86_64-apple-darwin.tar.gz"
-                sha256 "${X86_SHA}"
-              end
-            end
-
-            def install
-              bin.install "git-warden"
-            end
-
-            test do
-              system "#{bin}/git-warden", "version"
-            end
-          end
-          FORMULA
-
-      - name: Commit and push formula
-        env:
-          VERSION: ${{ needs.release.outputs.version }}
-        run: |
-          cd homebrew-tap
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Formula/git-warden.rb
-          git commit -m "bump git-warden to ${VERSION}"
-          git push
