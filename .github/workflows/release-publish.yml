@@ -21,7 +21,7 @@ jobs:
       version: ${{ steps.gv.outputs.SemVer }}
       tag: ${{ inputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ inputs.tag }}
           fetch-depth: 0
@@ -59,7 +59,7 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ needs.publish.outputs.tag }}
 
@@ -97,7 +97,7 @@ jobs:
           echo "x86_sha=${X86_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout homebrew tap
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: zcube/homebrew-tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
