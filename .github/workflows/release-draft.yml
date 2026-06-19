@@ -101,6 +101,7 @@ jobs:
         run: cargo install cargo-workspaces --locked
 
       - name: Set workspace version
+        shell: bash
         env:
           GV_VERSION: ${{ needs.release.outputs.version }}
         run: cargo workspaces version custom "${GV_VERSION}" --yes --no-git-commit
