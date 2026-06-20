@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=./.git-warden.schema.json
-# git-warden configuration for commit-checker-rs
+# git-warden configuration
 
 comment_language:
   enabled: true

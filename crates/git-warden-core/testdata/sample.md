@@ -7,7 +7,7 @@
 다음 명령어로 설치할 수 있습니다:
 
 ```bash
-go install github.com/zcube/commit-checker@latest
+cargo install git-warden
 ```
 
 ## 지원 언어
