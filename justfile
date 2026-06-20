@@ -1,38 +1,30 @@
-# Show the version gitversion-rs computes for the current commit
+# Show the current workspace version (Cargo.toml)
 version:
-    gitversion-rs -v FullSemVer
+    @yq -p toml -oy '.workspace.package.version' Cargo.toml
 
-# Build with CARGO_PKG_VERSION_PRE injected from gitversion-rs
+# Show the next version git-cliff derives from conventional commits since the last tag
+next-version:
+    @git-cliff --bumped-version
+
+# Build the workspace in release mode
 build:
-    gitversion-rs --exec "cargo build --release --workspace"
+    cargo build --release --workspace
 
-# Build and install to ~/.cargo/bin with CARGO_PKG_VERSION_PRE injected
+# Build and install to ~/.cargo/bin
 install:
-    gitversion-rs --exec "cargo install --path crates/git-warden --locked"
+    cargo install --path crates/git-warden --locked
 
-# Dry-run: show what cargo-release would do without making changes
-check level="patch":
-    cargo release {{level}} --workspace
-
-# Create release branch from main, bump version, commit, tag, push to origin
-# Usage: just release-start        (patch)
-#        just release-start minor
-#        just release-start major
-release-start level="patch":
+# Usage: just check  |  just check minor  |  just check 0.3.0
+# Dry-run cargo-release; auto-detects the bump from the commit log unless a level/version is given.
+check target="":
     #!/usr/bin/env bash
     set -euo pipefail
-    CURRENT=$(git rev-parse --abbrev-ref HEAD)
-    if [[ "${CURRENT}" != "main" ]]; then
-        echo "Error: must be on main branch (currently on ${CURRENT})"
-        exit 1
+    TARGET="{{target}}"
+    if [[ -z "${TARGET}" ]]; then
+        TARGET=$(git-cliff --bumped-version)
+        TARGET="${TARGET#v}"
     fi
-    if git show-ref --verify refs/heads/release >/dev/null 2>&1; then
-        echo "Error: release branch already exists. Use 'just release-retry' to reset it."
-        exit 1
-    fi
-    git pull --ff-only
-    git checkout -b release
-    cargo release {{level}} --workspace --execute --no-publish
+    cargo release "${TARGET}" --workspace
 
 # Publish all workspace crates to crates.io (manual fallback)
 publish:
@@ -45,11 +37,33 @@ gh-publish:
     VERSION=$(yq -p toml -oy '.workspace.package.version' Cargo.toml)
     gh workflow run release-publish.yml -f tag="v${VERSION}"
 
-# Reset a failed release: delete draft/tag/release branch and recreate from latest main
-# Blocked if the GitHub release is published or the version is already on crates.io
-# Usage: just release-retry        (patch)
-#        just release-retry minor
-release-retry level="patch":
+# Usage: just release-start  |  just release-start minor  |  just release-start 0.3.0
+# Create release branch from main, auto-bump (unless given), commit, tag, push to origin.
+release-start target="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    CURRENT=$(git rev-parse --abbrev-ref HEAD)
+    if [[ "${CURRENT}" != "main" ]]; then
+        echo "Error: must be on main branch (currently on ${CURRENT})"
+        exit 1
+    fi
+    if git show-ref --verify refs/heads/release >/dev/null 2>&1; then
+        echo "Error: release branch already exists. Use 'just release-retry' to reset it."
+        exit 1
+    fi
+    git pull --ff-only
+    TARGET="{{target}}"
+    if [[ -z "${TARGET}" ]]; then
+        TARGET=$(git-cliff --bumped-version)
+        TARGET="${TARGET#v}"
+    fi
+    git checkout -b release
+    cargo release "${TARGET}" --workspace --execute --no-publish
+
+# Usage: just release-retry  |  just release-retry minor
+# Blocked if the GitHub release is published or the version is already on crates.io.
+# Reset a failed release (delete draft/tag/branch, recreate from latest main); auto-bumps unless given.
+release-retry target="":
     #!/usr/bin/env bash
     set -euo pipefail
     VERSION=$(yq -p toml -oy '.workspace.package.version' Cargo.toml)
@@ -75,5 +89,10 @@ release-retry level="patch":
     git checkout main
     git pull --ff-only
     git branch -D release 2>/dev/null || true
+    TARGET="{{target}}"
+    if [[ -z "${TARGET}" ]]; then
+        TARGET=$(git-cliff --bumped-version)
+        TARGET="${TARGET#v}"
+    fi
     git checkout -b release
-    cargo release {{level}} --workspace --execute --no-publish
+    cargo release "${TARGET}" --workspace --execute --no-publish

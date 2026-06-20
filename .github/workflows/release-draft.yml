@@ -15,7 +15,7 @@ jobs:
     name: Create draft release
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.gv.outputs.SemVer }}
+      version: ${{ steps.meta.outputs.version }}
       tag: ${{ steps.meta.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
@@ -23,31 +23,12 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
-      - name: Fetch main branch
-        run: git fetch origin +refs/heads/main:refs/heads/main 2>/dev/null || true
-
-      - name: Install gitversion-rs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          GV_TAG=$(gh release view --repo zcube/gitversion-rs --json tagName -q .tagName)
-          gh release download "$GV_TAG" --repo zcube/gitversion-rs \
-            --pattern "gitversion-rs-${GV_TAG}-x86_64-unknown-linux-musl.tar.gz" \
-            --dir /tmp/gv
-          tar xzf "/tmp/gv/gitversion-rs-${GV_TAG}-x86_64-unknown-linux-musl.tar.gz" -C /tmp/gv
-          sudo install -m 0755 /tmp/gv/gitversion-rs /usr/local/bin/gitversion-rs
-          gitversion-rs --version
-
-      - name: Compute version
-        run: gitversion-rs --output build-server
-
-      - name: Export version output
-        id: gv
-        run: echo "SemVer=${GitVersion_SemVer}" >> "$GITHUB_OUTPUT"
-
-      - name: Set tag metadata
+      - name: Set version metadata
         id: meta
-        run: echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+        run: |
+          TAG="${{ github.ref_name }}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Install git-cliff
         env:
@@ -71,7 +52,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.meta.outputs.tag }}
-          VERSION: ${{ steps.gv.outputs.SemVer }}
+          VERSION: ${{ steps.meta.outputs.version }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" --draft --title "v${VERSION}" --notes-file CHANGELOG.md

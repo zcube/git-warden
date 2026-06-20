@@ -49,23 +49,25 @@ The split criterion: code that can be meaningfully reused by other applications 
 
 - **Source of truth: `Cargo.toml`** (`[workspace.package] version`) — managed by `cargo-release`.
   Do not bump by hand.
-- **Version policy: `.gitversion.yml`** — `ManualDeployment` mode (GitHubFlow/v1). Versions are
-  set explicitly by the developer; gitversion-rs computes metadata (PreReleaseTag,
-  InformationalVersion) from git history.
-- **Bump rules** (used to infer the level from the commit log):
+- **Bump detection: `git-cliff`** — `git-cliff --bumped-version` derives the next semver from the
+  conventional commits since the last tag. The `just` release recipes feed this value to
+  `cargo-release` (pass an explicit level/version to override). Install locally with
+  `brew install git-cliff` (or `cargo install git-cliff`).
+- **Bump rules** (conventional-commit defaults, applied by git-cliff):
   - `feat:` → minor
-  - `fix:` / `perf:` → patch
+  - `fix:` / `perf:` / other types → patch
   - `!` suffix or `BREAKING CHANGE:` → major
 
 ### Justfile commands
 
 ```bash
-just version              # show current FullSemVer (gitversion-rs)
-just check                # dry-run: see what cargo-release would do (patch)
-just check minor          # dry-run for a minor bump
-just release-start        # create release branch from main, bump patch, commit, tag, push
-just release-start minor  # bump minor
-just release-start major  # bump major
+just version              # show current workspace version (Cargo.toml)
+just next-version         # show the next version git-cliff derives from the commit log
+just check                # dry-run: see what cargo-release would do (auto-detected bump)
+just check minor          # dry-run for an explicit minor bump
+just release-start        # create release branch from main, auto-bump, commit, tag, push
+just release-start minor  # explicit minor bump
+just release-start 0.3.0  # explicit version
 just publish              # publish workspace to crates.io locally (manual fallback)
 just gh-publish           # trigger release-publish.yml: publish GitHub release + crates.io + FF merge release->main
 just release-retry        # reset a failed release: delete draft/tag/branch, recreate from latest main
@@ -77,9 +79,10 @@ just release-retry        # reset a failed release: delete draft/tag/branch, rec
 1. Ensure `main` is green.
 2. Start the release from `main`:
    ```bash
-   just release-start minor   # or patch / major
+   just release-start          # auto-detect bump from the commit log (or: minor / 0.3.0)
    ```
-   This creates a `release` branch and runs `cargo release minor --workspace --execute --no-publish` which:
+   This computes the next version with `git-cliff --bumped-version`, creates a `release` branch, and
+   runs `cargo release <version> --workspace --execute --no-publish` which:
    - Switches to the new `release` branch
    - Updates `[workspace.package] version` in `Cargo.toml`
    - Commits `"chore: release 0.2.0"`
@@ -104,62 +107,14 @@ just release-retry        # reset a failed release: delete draft/tag/branch, rec
    Deletes the draft release, tag, and `release` branch, then recreates from the latest `main`.
    Blocked if the release is already published or the version is on crates.io.
 
-## Recommended gitversion-rs integration pattern
-
-When integrating gitversion-rs into a Rust project, use the following pattern. This is also how
-git-warden itself should be built when gitversion-rs is available.
-
 ### Tool roles
 
 | Tool | Responsibility |
 |---|---|
-| **cargo-release** | Version number management — bumps `Cargo.toml`, commits, tags |
-| **gitversion-rs `--exec`** | Build-time metadata injection — `PreReleaseTag`, `InformationalVersion` |
+| **git-cliff** | Derives the next semver from conventional commits (`--bumped-version`); generates `CHANGELOG.md` |
+| **cargo-release** | Applies the version — bumps `Cargo.toml`, commits, tags, pushes |
 
-### What `gitversion-rs --exec` provides
-
-Running `gitversion-rs --exec "cargo build"` sets these env vars in the child process:
-
-```
-CARGO_PKG_VERSION_PRE   = PreReleaseTag   # "" on release tag, "5" on untagged dev commit
-GitVersion_InformationalVersion           # "0.1.0+Branch.main.Sha.abc1234"
-CARGO_PKG_VERSION       = SemVer          # overrides Cargo.toml value at build time
-```
-
-`CARGO_PKG_VERSION_PRE` is the key variable: it carries the `PreReleaseTag` without any code
-change or dirty state. Release builds get `""`, dev builds get commit distance, pre-release
-branches get the configured tag (e.g. `"alpha.1"`).
-
-### build.rs pattern
-
-```rust
-fn main() {
-    // gitversion-rs --exec sets this; fall back to CARGO_PKG_VERSION when git is absent.
-    let info = std::env::var("GitVersion_InformationalVersion")
-        .unwrap_or_else(|_| std::env::var("CARGO_PKG_VERSION").unwrap_or_default());
-
-    println!("cargo:rustc-env=APP_INFO_VERSION={info}");
-    println!("cargo:rerun-if-env-changed=GitVersion_InformationalVersion");
-}
-```
-
-In source files, `CARGO_PKG_VERSION_PRE` is available without a build.rs:
-
-```rust
-const PRE: &str = env!("CARGO_PKG_VERSION_PRE");  // "" / "5" / "alpha.1"
-```
-
-### Build command
-
-```bash
-gitversion-rs --exec "cargo build --release"
-```
-
-No `--allow-dirty` and no separate injection step needed. `cargo-release` has already written the
-correct version into `Cargo.toml`; gitversion-rs adds the git-derived metadata on top.
-
-### Fallback (no git / crates.io install)
-
-When `GitVersion_*` vars are absent, `build.rs` falls back to `CARGO_PKG_VERSION` from
-`Cargo.toml`. Because `cargo-release` stamped the correct version before publishing, the installed
-binary always reports the right version.
+The build embeds only the commit hash and build time (see `crates/git-warden/build.rs`), read
+directly from git — no version-tool integration is required at build time. When git is unavailable
+(e.g. a crates.io install), `build.rs` falls back to defaults and the binary reports
+`CARGO_PKG_VERSION` from `Cargo.toml`, which `cargo-release` stamped before publishing.
