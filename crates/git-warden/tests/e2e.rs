@@ -112,7 +112,7 @@ impl TestRepo {
             .env("HOME", &self.home)
             .env("XDG_CONFIG_HOME", &self.xdg)
             .env("GIT_WARDEN_GLOBAL_CONFIG", "")
-            .env("LANG", lang)
+            .env("GIT_WARDEN_LANG", lang)
             .output()
             .unwrap();
         let mut combined = String::from_utf8_lossy(&out.stdout).to_string();
