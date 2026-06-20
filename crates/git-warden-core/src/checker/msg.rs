@@ -215,22 +215,9 @@ fn check_msg_language(content: &str, cfg: &CommitMessageLanguageConfig) -> Vec<S
     let mut errs = Vec::new();
     let mut check_line = |line_num: usize, text: &str| {
         let text = text.trim();
-        let violated = if required == crate::langdetect::ENGLISH {
-            // English-required: any CJK / Hangul / Kana character is not allowed.
-            if !crate::langdetect::has_natural_language_content(text, min_length, &[]) {
-                false
-            } else {
-                crate::langdetect::has_script(text, crate::langdetect::KOREAN)
-                    || crate::langdetect::has_script(text, crate::langdetect::JAPANESE)
-                    || crate::langdetect::has_script(text, crate::langdetect::CHINESE)
-            }
-        } else {
-            // Korean / Japanese / Chinese / any: presence-based; English mixed in is allowed.
-            let (ok, has_content) =
-                crate::langdetect::is_required_language(text, &required, min_length, &[]);
-            has_content && !ok
-        };
-        if violated {
+        let (ok, has_content) =
+            crate::langdetect::is_required_language(text, &required, min_length, &[]);
+        if has_content && !ok {
             errs.push(crate::t!(
                 "msg.language_error",
                 Line = line_num,

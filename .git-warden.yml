@@ -19,6 +19,7 @@ comment_language:
     - .c
     - .cpp
     - .cs
+    - .sh
   ignore_files:
     - "crates/**/testdata/**"
     - "locales/**"

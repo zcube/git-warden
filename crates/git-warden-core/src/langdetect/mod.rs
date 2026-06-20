@@ -141,6 +141,10 @@ fn is_xml_tag_only(text: &str) -> bool {
 /// Return value `(ok, has_content)`:
 ///   - has_content=false: skipped because the text is too short or is a directive
 ///   - ok=false: language check failed
+///
+/// English is treated as the base language: when English is required, any CJK or Hangul
+/// character causes a violation even if Latin characters are also present. For other
+/// languages, presence of the required script in mixed text is sufficient to pass.
 pub fn is_required_language(
     text: &str,
     required: &str,
@@ -152,6 +156,12 @@ pub fn is_required_language(
     }
     if required == ANY || required.is_empty() {
         return (true, true);
+    }
+    if required == ENGLISH {
+        // English is the base language: any non-Latin script character is a violation.
+        let violated =
+            has_script(text, KOREAN) || has_script(text, JAPANESE) || has_script(text, CHINESE);
+        return (!violated, true);
     }
     // Mixed-language comments are allowed if they contain the required language.
     if has_script(text, required) {
@@ -348,6 +358,12 @@ mod tests {
     fn required_language_english() {
         assert_eq!(ndr("This is English", ENGLISH), (true, true));
         let (ok, _) = ndr("이것은 한국어입니다", ENGLISH);
+        assert!(!ok);
+        // Mixed Korean+English: even with Latin chars present, Korean makes it a violation.
+        let (ok, _) = ndr(
+            "태그 없이 12개 커밋: VersionSourceDistance=12 기준점",
+            ENGLISH,
+        );
         assert!(!ok);
     }
 
