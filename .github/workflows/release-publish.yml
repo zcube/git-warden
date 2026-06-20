@@ -136,3 +136,26 @@ jobs:
           git add Formula/git-warden.rb
           git commit -m "bump git-warden to ${VERSION}"
           git push
+
+  merge-to-main:
+    name: Merge release into main
+    needs: [publish, crates-io, homebrew]
+    if: always() && needs.publish.result == 'success' && needs.crates-io.result == 'success' && (needs.homebrew.result == 'success' || needs.homebrew.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fast-forward main to release
+        run: |
+          git fetch origin release
+          git merge --ff-only origin/release
+          git push origin main
+
+      - name: Delete release branch
+        run: git push origin --delete release
