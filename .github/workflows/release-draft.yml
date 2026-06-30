@@ -89,7 +89,7 @@ jobs:
         with:
           bin: git-warden
           target: ${{ matrix.target }}
-          include: README.md,README.en.md,README.ja.md,README.zh.md,LICENSE,.git-warden.schema.json,.git-warden.example.yml
+          include: README.md,README.ko.md,README.ja.md,README.zh.md,LICENSE,.git-warden.schema.json,.git-warden.example.yml
           archive: git-warden_$tag_$target
           token: ${{ secrets.GITHUB_TOKEN }}
 

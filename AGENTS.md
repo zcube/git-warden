@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Guide for agents/contributors working in this repository. For a user-facing overview see the
-[README](README.en.md).
+[README](README.md).
 
 ## Project overview
 

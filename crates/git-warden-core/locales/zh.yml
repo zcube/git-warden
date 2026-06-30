@@ -157,5 +157,5 @@
 "guide.custom_rules": "请按照各规则消息的要求修改或删除相应的模式。"
 "guide.protected_paths": "请将受保护路径的更改从暂存区移除 (git restore --staged <文件>)。如果是有意更改，请调整配置中的 protected_paths.paths 模式。"
 "guide.append_only": "撤销对 append-only 路径中现有内容的更改。新内容请追加到文件末尾，或放入名称排序在现有文件之后的新文件中。"
-"guide.commit_message": "请按照策略重写提交信息，然后使用 git commit --amend 修改。AI co-author trailer 和不可见字符可通过 'git-warden msg --fix <消息文件>' 自动移除。"
+"guide.commit_message": "请按照策略重写提交信息。AI co-author trailer 和不可见字符可通过 'git-warden msg --fix <消息文件>' 自动移除。"
 "validate.schema_violation": "%{Path}: 模式违规: %{Message}%{Location}"

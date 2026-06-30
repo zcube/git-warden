@@ -157,5 +157,5 @@
 "guide.custom_rules": "Fix or remove the matched patterns as required by each rule's message."
 "guide.protected_paths": "Unstage the changes to protected paths (git restore --staged <file>). If the change is intentional, adjust the protected_paths.paths patterns in the config."
 "guide.append_only": "Revert changes to existing content in append-only paths. Add new content at the end of the file, or in a new file whose name sorts after the existing files."
-"guide.commit_message": "Rewrite the commit message to comply with the policy and apply it with git commit --amend. AI co-author trailers and invisible characters can be removed automatically with 'git-warden msg --fix <message-file>'."
+"guide.commit_message": "Rewrite the commit message to comply with the policy. AI co-author trailers and invisible characters can be removed automatically with 'git-warden msg --fix <message-file>'."
 "validate.schema_violation": "%{Path}: schema violation: %{Message}%{Location}"

@@ -157,5 +157,5 @@
 "guide.custom_rules": "各ルールのメッセージが要求するとおりに、該当パターンを修正または削除してください。"
 "guide.protected_paths": "保護されたパスへの変更をステージングから取り除いてください (git restore --staged <ファイル>)。意図した変更であれば、設定の protected_paths.paths パターンを調整してください。"
 "guide.append_only": "append-only パスの既存内容への変更を元に戻してください。新しい内容はファイル末尾に追加するか、既存ファイルより後にソートされる名前の新規ファイルとして追加してください。"
-"guide.commit_message": "コミットメッセージをポリシーに合わせて書き直し、git commit --amend で修正してください。AI co-author トレーラーと不可視文字は 'git-warden msg --fix <メッセージファイル>' で自動削除できます。"
+"guide.commit_message": "コミットメッセージをポリシーに合わせて書き直してください。AI co-author トレーラーと不可視文字は 'git-warden msg --fix <メッセージファイル>' で自動削除できます。"
 "validate.schema_violation": "%{Path}: スキーマ違反: %{Message}%{Location}"
